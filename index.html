@@ -546,6 +546,76 @@
     }
 
     .demo-chip strong { font-weight: 700; }
+
+    /* ── Search highlight ── */
+    .search.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+    tr.search-hidden { display: none; }
+
+    /* ── Notification dropdown ── */
+    .notif-panel {
+      display: none; position: absolute; right: 0; top: calc(100% + 10px);
+      width: 340px; background: #fff; border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: 0 12px 36px rgba(0,0,0,0.12); z-index: 500;
+      overflow: hidden;
+    }
+    .notif-panel.open { display: block; }
+    .notif-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px 10px; border-bottom: 1px solid var(--border);
+    }
+    .notif-header span { font-size: 14px; font-weight: 700; }
+    .notif-mark-all { font-size: 11.5px; color: var(--accent); cursor: pointer; font-weight: 500; }
+    .notif-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+      transition: background 0.1s; cursor: pointer;
+    }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item:hover { background: var(--bg); }
+    .notif-item.unread { background: #f8f9ff; }
+    .notif-ico {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;
+    }
+    .notif-txt { font-size: 12.5px; color: var(--t1); line-height: 1.4; }
+    .notif-time { font-size: 11px; color: var(--t3); margin-top: 3px; }
+    .notif-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+
+    /* ── User avatar dropdown ── */
+    .top-ava-wrap { position: relative; }
+    .top-ava-menu {
+      display: none; position: absolute; right: 0; top: calc(100% + 10px);
+      width: 220px; background: #fff; border: 1px solid var(--border);
+      border-radius: 12px; box-shadow: 0 12px 36px rgba(0,0,0,0.12); z-index: 500;
+      padding: 6px; overflow: hidden;
+    }
+    .top-ava-menu.open { display: block; }
+    .top-ava-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px 8px; border-bottom: 1px solid var(--border); margin-bottom: 4px;
+    }
+    .tav-name { font-size: 13px; font-weight: 700; }
+    .tav-email { font-size: 11px; color: var(--t3); }
+    .tav-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border-radius: 7px; cursor: pointer;
+      font-size: 13px; color: var(--t1); transition: background 0.1s;
+    }
+    .tav-item:hover { background: var(--bg); }
+    .tav-item.danger { color: var(--danger); }
+    .tav-sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+      padding: 13px 18px; border-radius: 10px; font-size: 13.5px; font-weight: 500;
+      color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      transform: translateY(16px); opacity: 0; transition: all 0.28s ease;
+      max-width: 340px; pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast-info    { background: #6366f1; }
+    .toast-success { background: #10b981; }
   </style>
 </head>
 <body>
@@ -676,17 +746,57 @@
       <span>Home</span><span>›</span><span style="color:var(--t2)">Overview</span>
     </div>
     <div class="spacer"></div>
-    <div class="search">
+    <div class="search" id="search-box">
       <span style="color:var(--t3);font-size:14px">🔍</span>
-      <input type="text" placeholder="Search orders, customers…">
+      <input type="text" id="search-input" placeholder="Search orders, customers…"
+        oninput="searchTable(this.value)"
+        onfocus="document.getElementById('search-box').classList.add('active')"
+        onblur="document.getElementById('search-box').classList.remove('active')">
     </div>
     <div class="top-actions">
-      <div class="icon-btn2">
+      <div class="icon-btn2" id="notif-btn" onclick="toggleNotifPanel()" style="position:relative">
         🔔
-        <div class="notif-pip"></div>
+        <div class="notif-pip" id="notif-pip"></div>
+        <div class="notif-panel" id="notif-panel">
+          <div class="notif-header">
+            <span>Notifications</span>
+            <span class="notif-mark-all" onclick="markAllRead(event)">Mark all read</span>
+          </div>
+          <div class="notif-item unread" onclick="dismissNotif(this)">
+            <div class="notif-ico" style="background:#eef2ff">💰</div>
+            <div style="flex:1"><div class="notif-txt"><strong>New enterprise deal</strong> — Sarah Johnson upgraded to Enterprise Plan ($9,600)</div><div class="notif-time">2 min ago</div></div>
+            <div class="notif-dot"></div>
+          </div>
+          <div class="notif-item unread" onclick="dismissNotif(this)">
+            <div class="notif-ico" style="background:#fee2e2">⚠️</div>
+            <div style="flex:1"><div class="notif-txt"><strong>Payment failed</strong> — Olivia Davis's card was declined</div><div class="notif-time">27 min ago</div></div>
+            <div class="notif-dot"></div>
+          </div>
+          <div class="notif-item unread" onclick="dismissNotif(this)">
+            <div class="notif-ico" style="background:#fef3c7">🔄</div>
+            <div style="flex:1"><div class="notif-txt"><strong>Refund requested</strong> — Ava Thompson ($9,600)</div><div class="notif-time">1 hr ago</div></div>
+            <div class="notif-dot"></div>
+          </div>
+          <div class="notif-item" onclick="dismissNotif(this)">
+            <div class="notif-ico" style="background:#d1fae5">👤</div>
+            <div style="flex:1"><div class="notif-txt">New user <strong>alex.kim@techco.io</strong> signed up</div><div class="notif-time">14 min ago</div></div>
+          </div>
+        </div>
       </div>
-      <div class="icon-btn2">📋</div>
-      <div class="top-ava">TO</div>
+      <div class="icon-btn2" onclick="showToast('Report copied to clipboard', 'success')">📋</div>
+      <div class="top-ava-wrap">
+        <div class="top-ava" onclick="toggleAvaMenu()">TO</div>
+        <div class="top-ava-menu" id="ava-menu">
+          <div class="top-ava-head">
+            <div class="top-ava" style="width:36px;height:36px;font-size:13px">TO</div>
+            <div><div class="tav-name">Tetsugaku O.</div><div class="tav-email">admin@datapulse.io</div></div>
+          </div>
+          <div class="tav-item" onclick="showToast('Profile settings coming soon', 'info')">👤 View Profile</div>
+          <div class="tav-item" onclick="showToast('Account settings coming soon', 'info')">⚙️ Account Settings</div>
+          <div class="tav-sep"></div>
+          <div class="tav-item danger" onclick="document.getElementById('overlay').style.display='flex';closeTopDropdowns()">🚪 Sign Out</div>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -995,6 +1105,73 @@ FEED.forEach(f => {
         <div class="feed-time">${f.time}</div>
       </div>
     </div>`;
+});
+
+// ── Toast utility ──
+function showToast(msg, type = 'info') {
+  const t = Object.assign(document.createElement('div'), {
+    className: `toast toast-${type}`, textContent: msg
+  });
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+// ── Top Bar: Search ──
+function searchTable(q) {
+  const term = q.toLowerCase().trim();
+  document.querySelectorAll('#tbody tr').forEach(row => {
+    row.classList.toggle('search-hidden', term !== '' && !row.textContent.toLowerCase().includes(term));
+  });
+}
+
+// ── Top Bar: Notification panel ──
+function toggleNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  const isOpen = panel.classList.contains('open');
+  closeTopDropdowns();
+  if (!isOpen) panel.classList.add('open');
+}
+
+function dismissNotif(item) {
+  item.classList.remove('unread');
+  const dot = item.querySelector('.notif-dot');
+  if (dot) dot.remove();
+  updateNotifBadge();
+}
+
+function markAllRead(e) {
+  e.stopPropagation();
+  document.querySelectorAll('.notif-item.unread').forEach(i => {
+    i.classList.remove('unread');
+    const dot = i.querySelector('.notif-dot');
+    if (dot) dot.remove();
+  });
+  updateNotifBadge();
+}
+
+function updateNotifBadge() {
+  const unreadCount = document.querySelectorAll('.notif-item.unread').length;
+  const pip = document.getElementById('notif-pip');
+  if (pip) pip.style.display = unreadCount > 0 ? 'block' : 'none';
+}
+
+// ── Top Bar: Avatar menu ──
+function toggleAvaMenu() {
+  const menu = document.getElementById('ava-menu');
+  const isOpen = menu.classList.contains('open');
+  closeTopDropdowns();
+  if (!isOpen) menu.classList.add('open');
+}
+
+function closeTopDropdowns() {
+  document.querySelectorAll('.notif-panel, .top-ava-menu').forEach(d => d.classList.remove('open'));
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#notif-btn') && !e.target.closest('.top-ava-wrap')) {
+    closeTopDropdowns();
+  }
 });
 </script>
 </body>
