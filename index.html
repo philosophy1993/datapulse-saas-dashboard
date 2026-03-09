@@ -1236,8 +1236,77 @@
       </div>
     </div>
 
+    <!-- SETTINGS PAGE (hidden by default) -->
+    <div id="settings-page" style="display:none">
+      <div style="max-width:720px">
+        <!-- Profile section -->
+        <div class="card" style="margin-bottom:18px">
+          <div class="card-head">
+            <div><div class="card-ttl">Profile</div><div class="card-sub">Manage your personal information</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:18px;margin-bottom:22px">
+            <div class="top-ava" style="width:60px;height:60px;font-size:22px;border-radius:16px;flex-shrink:0">TO</div>
+            <div style="flex:1">
+              <div style="font-size:16px;font-weight:700;margin-bottom:3px">Tetsugaku O.</div>
+              <div style="font-size:13px;color:var(--t3)">admin@datapulse.io · Administrator</div>
+            </div>
+            <button class="btn btn-accent" onclick="showToast('Profile photo upload coming soon','info')">Change Photo</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="modal-row" style="margin-bottom:0">
+              <label class="modal-label">Full Name</label>
+              <input class="modal-input" type="text" value="Tetsugaku O.">
+            </div>
+            <div class="modal-row" style="margin-bottom:0">
+              <label class="modal-label">Email Address</label>
+              <input class="modal-input" type="email" value="admin@datapulse.io">
+            </div>
+            <div class="modal-row" style="margin-bottom:0">
+              <label class="modal-label">Role</label>
+              <input class="modal-input" type="text" value="Administrator" readonly style="opacity:0.6;cursor:default">
+            </div>
+            <div class="modal-row" style="margin-bottom:0">
+              <label class="modal-label">Time Zone</label>
+              <select class="modal-select">
+                <option selected>UTC+9 Tokyo</option>
+                <option>UTC+0 London</option>
+                <option>UTC-5 New York</option>
+                <option>UTC-8 Los Angeles</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer" style="margin-top:18px">
+            <button class="btn btn-accent" onclick="showToast('Profile saved successfully','success')">Save Changes</button>
+          </div>
+        </div>
+
+        <!-- Notifications section -->
+        <div class="card" style="margin-bottom:18px">
+          <div class="card-head">
+            <div><div class="card-ttl">Notification Preferences</div><div class="card-sub">Choose what events you want to be notified about</div></div>
+          </div>
+          <div id="notif-prefs"></div>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="card" style="border-color:#fecaca">
+          <div class="card-head">
+            <div><div class="card-ttl" style="color:var(--danger)">Danger Zone</div><div class="card-sub">Irreversible actions — proceed with caution</div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)">
+            <div><div style="font-size:13.5px;font-weight:600">Export all data</div><div style="font-size:12px;color:var(--t3);margin-top:2px">Download all your analytics data as a CSV archive</div></div>
+            <button class="btn" onclick="exportCSV()">Export Data</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0">
+            <div><div style="font-size:13.5px;font-weight:600;color:var(--danger)">Delete account</div><div style="font-size:12px;color:var(--t3);margin-top:2px">Permanently remove your account and all data</div></div>
+            <button class="btn" style="border-color:#fecaca;color:var(--danger)" onclick="showToast('Please contact support to delete your account','warn')">Delete Account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- BOTTOM -->
-    <div class="btm">
+    <div class="btm" id="dashboard-content">
       <!-- Orders Table -->
       <div class="card">
         <div class="card-head">
@@ -1723,6 +1792,20 @@ function navigate(el, pageName, section) {
     `<span>Home</span><span>›</span><span style="color:var(--t2)">${section}</span>` +
     (pageName !== section ? `<span>›</span><span style="color:var(--t2)">${pageName}</span>` : '');
   closeAllDropdowns();
+
+  // Show settings page or dashboard content
+  const isSettings = pageName === 'Settings';
+  const settingsEl = document.getElementById('settings-page');
+  const dashEl     = document.getElementById('dashboard-content');
+  const periodEl   = document.querySelector('.period-bar');
+  const chartsEl   = document.querySelector('.charts-row');
+  const kpiEl      = document.querySelector('.kpi-row');
+  if (settingsEl) settingsEl.style.display    = isSettings ? 'block' : 'none';
+  if (dashEl)     dashEl.style.display        = isSettings ? 'none' : 'grid';
+  if (chartsEl)   chartsEl.style.display      = isSettings ? 'none' : 'grid';
+  if (kpiEl)      kpiEl.style.display         = isSettings ? 'none' : 'grid';
+  if (periodEl)   periodEl.style.display      = isSettings ? 'none' : 'flex';
+  if (isSettings) { document.querySelector('.period-title').textContent = 'Settings'; buildNotifPrefs(); }
 }
 
 // ── Workspace switcher ──
@@ -1864,6 +1947,34 @@ document.addEventListener('click', (e) => {
     document.getElementById('date-dropdown')?.classList.remove('open');
   }
 });
+
+// ── Settings: Notification preferences ──
+const NOTIF_PREFS = [
+  { id:'np1', label:'New enterprise deals',    sub:'Get notified when a deal > $5,000 closes', checked:true },
+  { id:'np2', label:'Payment failures',         sub:'Alerts for failed or declined payments',   checked:true },
+  { id:'np3', label:'Refund requests',          sub:'When a customer requests a refund',        checked:true },
+  { id:'np4', label:'New user sign-ups',        sub:'Daily digest of new registrations',        checked:false },
+  { id:'np5', label:'Weekly report',            sub:'Automated revenue summary every Monday',   checked:true },
+  { id:'np6', label:'System alerts',            sub:'Downtime, latency, or security events',    checked:true },
+];
+
+function buildNotifPrefs() {
+  const el = document.getElementById('notif-prefs');
+  if (!el || el.children.length > 0) return; // already built
+  el.innerHTML = NOTIF_PREFS.map(p => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:13.5px;font-weight:600;margin-bottom:2px">${p.label}</div>
+        <div style="font-size:12px;color:var(--t3)">${p.sub}</div>
+      </div>
+      <label style="position:relative;display:inline-block;width:42px;height:24px;cursor:pointer;flex-shrink:0">
+        <input type="checkbox" id="${p.id}" ${p.checked ? 'checked' : ''} style="opacity:0;width:0;height:0"
+          onchange="showToast(this.checked ? 'Notification enabled' : 'Notification disabled','info')">
+        <span style="position:absolute;inset:0;border-radius:34px;background:${p.checked ? 'var(--accent)' : 'var(--border)'};transition:0.2s" id="sl-${p.id}"></span>
+        <span style="position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:0.2s;transform:${p.checked ? 'translateX(18px)' : 'none'}"></span>
+      </label>
+    </div>`).join('');
+}
 
 // ── KPI Drill-down ──
 const KPI_DATA = {
