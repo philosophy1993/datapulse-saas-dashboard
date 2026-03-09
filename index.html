@@ -744,6 +744,115 @@
       border: 1px solid #fecaca; border-radius: 8px;
       padding: 9px 13px; font-size: 12.5px; margin-bottom: 14px;
     }
+
+    /* ══════════════════════ DARK MODE ══════════════════════ */
+    html.dark {
+      --bg: #0f1117; --card: #1a1c2e;
+      --border: rgba(255,255,255,0.08);
+      --t1: #f1f5f9; --t2: #94a3b8; --t3: #475569;
+    }
+    html.dark body { background: var(--bg); color: var(--t1); }
+    html.dark .topbar {
+      background: rgba(15,17,23,0.95);
+      border-bottom-color: var(--border);
+    }
+    html.dark .kpi,
+    html.dark .card { background: var(--card); border-color: var(--border); }
+    html.dark .btn {
+      background: var(--card); color: var(--t1);
+      border-color: var(--border);
+    }
+    html.dark .btn:hover { background: rgba(255,255,255,0.06); }
+    html.dark .icon-btn2 {
+      background: var(--card); border-color: var(--border);
+    }
+    html.dark .icon-btn2:hover { background: rgba(255,255,255,0.06); }
+    html.dark .mini-card { background: rgba(255,255,255,0.04); }
+    html.dark .tab.on { background: rgba(255,255,255,0.08); }
+    html.dark .tbl-wrap thead th { border-color: var(--border); }
+    html.dark tbody tr { border-color: var(--border); }
+    html.dark .delta-chip.up { background: rgba(16,185,129,0.15); color: #34d399; }
+    html.dark .delta-chip.dn { background: rgba(239,68,68,0.15); color: #f87171; }
+    html.dark .badge.paid   { background: rgba(16,185,129,0.15); color: #34d399; }
+    html.dark .badge.pend   { background: rgba(245,158,11,0.15); color: #fbbf24; }
+    html.dark .badge.fail   { background: rgba(239,68,68,0.15); color: #f87171; }
+    html.dark .badge.refund { background: rgba(139,92,246,0.15); color: #c4b5fd; }
+    html.dark .modal-box,
+    html.dark .txn-modal,
+    html.dark .notif-panel,
+    html.dark .top-ava-menu,
+    html.dark .date-dropdown,
+    html.dark .kb-modal-box {
+      background: var(--card); border-color: var(--border);
+      color: var(--t1);
+    }
+    html.dark .modal-input,
+    html.dark .modal-select {
+      background: rgba(255,255,255,0.05); color: var(--t1);
+      border-color: var(--border);
+    }
+    html.dark .txn-close { background: var(--card); border-color: var(--border); color: var(--t1); }
+    html.dark .txn-close:hover { background: rgba(255,255,255,0.08); }
+    html.dark .txn-search { background: rgba(255,255,255,0.05); border-color: var(--border); }
+    html.dark .txn-filter { background: transparent; border-color: var(--border); color: var(--t2); }
+    html.dark .txn-filter:hover { background: rgba(255,255,255,0.06); }
+    html.dark .txn-filter.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    html.dark .date-opt:hover { background: rgba(255,255,255,0.06); }
+    html.dark .date-opt.selected { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+    html.dark .notif-item:hover { background: rgba(255,255,255,0.04); }
+    html.dark .notif-item.unread { background: rgba(99,102,241,0.08); }
+    html.dark .notif-header,
+    html.dark .notif-item { border-color: var(--border); }
+    html.dark .tav-item:hover { background: rgba(255,255,255,0.06); }
+    html.dark .tav-sep,
+    html.dark .top-ava-head { border-color: var(--border); }
+    html.dark .login-box { background: var(--card); }
+    html.dark .finput { background: rgba(255,255,255,0.05); color: var(--t1); border-color: var(--border); }
+    html.dark .social-btn { background: rgba(255,255,255,0.05); border-color: var(--border); color: var(--t1); }
+    html.dark .social-btn:hover { background: rgba(255,255,255,0.08); }
+    html.dark .demo-chip { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); color: #a5b4fc; }
+    html.dark .period-bar { color: var(--t1); }
+    html.dark .theme-btn { color: var(--t1); }
+    html.dark .kb-shortcut { background: rgba(255,255,255,0.07); color: var(--t1); }
+    html.dark .kb-section-title { color: var(--t2); }
+    html.dark .kb-row { border-color: var(--border); }
+
+    /* ── Dark mode toggle button ── */
+    .theme-btn {
+      width: 34px; height: 34px; border-radius: 8px;
+      border: 1px solid var(--border); background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 15px; transition: background 0.15s;
+    }
+    .theme-btn:hover { background: var(--bg); }
+
+    /* ── Keyboard shortcut modal ── */
+    .kb-modal-box {
+      background: #fff; border-radius: 16px; padding: 28px;
+      width: min(560px, 96vw); max-height: calc(100vh - 120px);
+      overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+    }
+    .kb-head {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+    }
+    .kb-section-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--t3); margin: 18px 0 8px;
+    }
+    .kb-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 0; border-bottom: 1px solid var(--border);
+      font-size: 13px; color: var(--t1);
+    }
+    .kb-row:last-child { border-bottom: none; }
+    .kb-keys { display: flex; align-items: center; gap: 4px; }
+    .kb-shortcut {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 3px 8px; border-radius: 5px; font-size: 11.5px; font-weight: 600;
+      background: var(--bg); color: var(--t1); border: 1px solid var(--border);
+      font-family: monospace;
+    }
+    .kb-plus { font-size: 10px; color: var(--t3); margin: 0 2px; }
   </style>
 </head>
 <body>
@@ -904,6 +1013,8 @@
         onblur="document.getElementById('search-box').classList.remove('active')">
     </div>
     <div class="top-actions">
+      <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle dark mode (D)">🌙</button>
+      <button class="theme-btn" onclick="openKbModal()" title="Keyboard shortcuts (?)">⌨️</button>
       <div class="icon-btn2" id="notif-btn" onclick="toggleNotifPanel()" style="position:relative">
         🔔
         <div class="notif-pip" id="notif-pip"></div>
@@ -1191,6 +1302,36 @@
         <tbody id="txn-tbody"></tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ KEYBOARD SHORTCUTS MODAL ═══════════════════ -->
+<div class="modal-backdrop" id="kb-modal" onclick="closeKbModal(event)">
+  <div class="kb-modal-box" onclick="event.stopPropagation()">
+    <div class="kb-head">
+      <div class="modal-title">Keyboard Shortcuts</div>
+      <button class="txn-close" onclick="closeKbModal()">✕</button>
+    </div>
+
+    <div class="kb-section-title">Navigation</div>
+    <div class="kb-row"><span>Go to Dashboard</span><span class="kb-keys"><span class="kb-shortcut">G</span><span class="kb-plus">then</span><span class="kb-shortcut">D</span></span></div>
+    <div class="kb-row"><span>Go to Analytics</span><span class="kb-keys"><span class="kb-shortcut">G</span><span class="kb-plus">then</span><span class="kb-shortcut">A</span></span></div>
+    <div class="kb-row"><span>Go to Settings</span><span class="kb-keys"><span class="kb-shortcut">G</span><span class="kb-plus">then</span><span class="kb-shortcut">S</span></span></div>
+
+    <div class="kb-section-title">Search & Filters</div>
+    <div class="kb-row"><span>Focus search bar</span><span class="kb-keys"><span class="kb-shortcut">/</span></span></div>
+    <div class="kb-row"><span>Clear search</span><span class="kb-keys"><span class="kb-shortcut">Esc</span></span></div>
+
+    <div class="kb-section-title">Modals & Panels</div>
+    <div class="kb-row"><span>View all transactions</span><span class="kb-keys"><span class="kb-shortcut">T</span></span></div>
+    <div class="kb-row"><span>New report</span><span class="kb-keys"><span class="kb-shortcut">N</span></span></div>
+    <div class="kb-row"><span>Notifications</span><span class="kb-keys"><span class="kb-shortcut">B</span></span></div>
+    <div class="kb-row"><span>Close any modal</span><span class="kb-keys"><span class="kb-shortcut">Esc</span></span></div>
+
+    <div class="kb-section-title">Display</div>
+    <div class="kb-row"><span>Toggle dark mode</span><span class="kb-keys"><span class="kb-shortcut">D</span></span></div>
+    <div class="kb-row"><span>Export as CSV</span><span class="kb-keys"><span class="kb-shortcut">E</span></span></div>
+    <div class="kb-row"><span>Show this help</span><span class="kb-keys"><span class="kb-shortcut">?</span></span></div>
   </div>
 </div>
 
@@ -1662,6 +1803,103 @@ document.addEventListener('click', (e) => {
   }
   if (!e.target.closest('#date-btn') && !e.target.closest('.date-dropdown')) {
     document.getElementById('date-dropdown')?.classList.remove('open');
+  }
+});
+
+// ── Dark mode ──
+function toggleTheme() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  document.getElementById('theme-btn').textContent = isDark ? '☀️' : '🌙';
+  localStorage.setItem('dp-theme', isDark ? 'dark' : 'light');
+  // Update Chart.js colors
+  const textColor = isDark ? '#94a3b8' : '#94a3b8';
+  const gridColor = isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9';
+  Chart.defaults.color = textColor;
+  if (window.revChart) {
+    revChart.options.scales.x.ticks.color = textColor;
+    revChart.options.scales.y.ticks.color = textColor;
+    revChart.options.scales.y.grid.color  = gridColor;
+    revChart.update();
+  }
+  showToast(isDark ? 'Dark mode enabled' : 'Light mode enabled', 'info');
+}
+
+// Apply saved theme on load
+(function() {
+  if (localStorage.getItem('dp-theme') === 'dark') {
+    document.documentElement.classList.add('dark');
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('theme-btn');
+      if (btn) btn.textContent = '☀️';
+    });
+  }
+})();
+
+// ── Keyboard shortcuts modal ──
+function openKbModal() {
+  document.getElementById('kb-modal').classList.add('open');
+}
+
+function closeKbModal(e) {
+  if (!e || e.target === document.getElementById('kb-modal')) {
+    document.getElementById('kb-modal').classList.remove('open');
+  }
+}
+
+// ── Global keyboard shortcuts ──
+let gKeyBuffer = '';
+let gKeyTimer  = null;
+
+document.addEventListener('keydown', (e) => {
+  // Skip if focus is inside an input/textarea/select
+  if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
+  const key = e.key;
+
+  // Close any open modal with Escape
+  if (key === 'Escape') {
+    ['kb-modal','txn-modal','report-modal'].forEach(id => {
+      document.getElementById(id)?.classList.remove('open');
+    });
+    closeAllDropdowns();
+    closeTopDropdowns();
+    document.getElementById('date-dropdown')?.classList.remove('open');
+    return;
+  }
+
+  // Single-key shortcuts
+  if (key === '?') { e.preventDefault(); openKbModal(); return; }
+  if (key === 'd' || key === 'D') { toggleTheme(); return; }
+  if (key === 't' || key === 'T') { openTxnModal(); return; }
+  if (key === 'n' || key === 'N') { openReportModal(); return; }
+  if (key === 'e' || key === 'E') { exportCSV(); return; }
+  if (key === 'b' || key === 'B') { toggleNotifPanel(); return; }
+  if (key === '/') {
+    e.preventDefault();
+    document.getElementById('search-input')?.focus();
+    return;
+  }
+
+  // Two-key chord: G + D/A/S for navigation
+  if (key === 'g' || key === 'G') {
+    gKeyBuffer = 'g';
+    clearTimeout(gKeyTimer);
+    gKeyTimer = setTimeout(() => { gKeyBuffer = ''; }, 1500);
+    return;
+  }
+  if (gKeyBuffer === 'g') {
+    gKeyBuffer = '';
+    clearTimeout(gKeyTimer);
+    const navMap = {
+      'd': ['Dashboard', 'Overview'],
+      'a': ['Analytics', 'Overview'],
+      's': ['Settings', 'System'],
+    };
+    const lk = key.toLowerCase();
+    if (navMap[lk]) {
+      const navItems = document.querySelectorAll('.nav-item');
+      const target = Array.from(navItems).find(el => el.textContent.trim().startsWith(navMap[lk][0]));
+      if (target) navigate(target, navMap[lk][0], navMap[lk][1]);
+    }
   }
 });
 </script>
