@@ -546,6 +546,27 @@
     }
 
     .demo-chip strong { font-weight: 700; }
+
+    /* ── Toast notifications ── */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+      padding: 13px 18px; border-radius: 10px; font-size: 13.5px; font-weight: 500;
+      color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      transform: translateY(16px); opacity: 0; transition: all 0.28s ease;
+      max-width: 340px; pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast-info    { background: #6366f1; }
+    .toast-success { background: #10b981; }
+    .toast-warn    { background: #f59e0b; }
+    .toast-error   { background: #ef4444; }
+
+    /* ── Login error message ── */
+    .login-error {
+      display: none; color: #991b1b; background: #fee2e2;
+      border: 1px solid #fecaca; border-radius: 8px;
+      padding: 9px 13px; font-size: 12.5px; margin-bottom: 14px;
+    }
   </style>
 </head>
 <body>
@@ -561,8 +582,8 @@
     <p class="lbox-s">Sign in to access your analytics dashboard</p>
 
     <div class="social-btns">
-      <button class="social-btn">🔵 Google</button>
-      <button class="social-btn">⬛ GitHub</button>
+      <button class="social-btn" onclick="socialLogin('Google')">🔵 Google</button>
+      <button class="social-btn" onclick="socialLogin('GitHub')">⬛ GitHub</button>
     </div>
 
     <div class="divider"><div class="div-line"></div><span class="div-txt">or continue with email</span><div class="div-line"></div></div>
@@ -573,17 +594,18 @@
     </div>
 
     <div class="fgroup">
-      <a href="#" class="forgot">Forgot password?</a>
+      <a href="#" class="forgot" onclick="forgotPassword();return false;">Forgot password?</a>
       <label class="flabel">Password</label>
       <input class="finput" type="password" value="••••••••••••" placeholder="Your password">
     </div>
 
-    <button class="lbtn" onclick="document.getElementById('overlay').style.display='none'">
+    <div id="login-error" class="login-error"></div>
+    <button class="lbtn" onclick="validateLogin()">
       Sign in to Dashboard →
     </button>
 
     <p class="signup-link" style="margin-top:16px">
-      New to DataPulse? <a href="#">Start your 14-day free trial</a>
+      New to DataPulse? <a href="#" onclick="showSignup();return false;">Start your 14-day free trial</a>
     </p>
 
     <div class="demo-chip">
@@ -996,6 +1018,62 @@ FEED.forEach(f => {
       </div>
     </div>`;
 });
+
+// ── Toast utility ──
+function showToast(msg, type = 'info') {
+  const t = Object.assign(document.createElement('div'), {
+    className: `toast toast-${type}`,
+    textContent: msg
+  });
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => t.remove(), 300);
+  }, 3500);
+}
+
+// ── Auth: email/password validation ──
+function validateLogin() {
+  const email = document.querySelector('#overlay input[type="email"]').value.trim();
+  const pass  = document.querySelector('#overlay input[type="password"]').value;
+  const err   = document.getElementById('login-error');
+  err.style.display = 'none';
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    err.textContent = 'Please enter a valid email address.';
+    err.style.display = 'block'; return;
+  }
+  if (pass.length < 6) {
+    err.textContent = 'Password must be at least 6 characters.';
+    err.style.display = 'block'; return;
+  }
+  if (email !== 'admin@datapulse.io' || pass !== 'password123') {
+    err.textContent = 'Incorrect credentials. Try the demo login below.';
+    err.style.display = 'block'; return;
+  }
+  document.getElementById('overlay').style.display = 'none';
+  showToast('Welcome back, Tetsugaku! ✨', 'success');
+}
+
+// ── Auth: social login placeholder ──
+function socialLogin(provider) {
+  showToast(`${provider} OAuth is coming soon. Please use email login for now.`, 'info');
+}
+
+// ── Auth: forgot password ──
+function forgotPassword() {
+  const email = document.querySelector('#overlay input[type="email"]').value.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showToast('Enter your email address first.', 'warn'); return;
+  }
+  showToast(`Password reset link sent to ${email}`, 'success');
+}
+
+// ── Auth: sign-up placeholder ──
+function showSignup() {
+  showToast('14-day free trial sign-up page coming soon!', 'info');
+}
 </script>
 </body>
 </html>
