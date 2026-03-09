@@ -817,6 +817,50 @@
     html.dark .kb-section-title { color: var(--t2); }
     html.dark .kb-row { border-color: var(--border); }
 
+    /* ── KPI drill-down panel ── */
+    .kpi-panel {
+      display: none; position: fixed; right: 0; top: 0; bottom: 0;
+      width: 380px; background: #fff; border-left: 1px solid var(--border);
+      z-index: 700; box-shadow: -12px 0 40px rgba(0,0,0,0.12);
+      overflow-y: auto; padding: 28px;
+      transform: translateX(100%); transition: transform 0.28s ease;
+    }
+    .kpi-panel.open { display: block; transform: translateX(0); }
+    .kpi-panel-head {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px;
+    }
+    .kpi-panel-title { font-size: 16px; font-weight: 800; }
+    .kpi-panel-sub { font-size: 12px; color: var(--t3); margin-top: 2px; }
+    .kpi-stat-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 22px;
+    }
+    .kpi-stat {
+      background: var(--bg); border-radius: 10px; padding: 14px 16px;
+    }
+    .kpi-stat-val { font-size: 18px; font-weight: 800; margin-bottom: 3px; }
+    .kpi-stat-lbl { font-size: 11px; color: var(--t3); }
+    .kpi-breakdown-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.7px; color: var(--t3); margin-bottom: 10px;
+    }
+    .kpi-breakdown-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 0; border-bottom: 1px solid var(--border);
+    }
+    .kpi-breakdown-item:last-child { border-bottom: none; }
+    .kpi-bd-bar-wrap { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .kpi-bd-bar { height: 100%; border-radius: 3px; }
+    .kpi-bd-label { font-size: 12.5px; color: var(--t2); width: 100px; flex-shrink: 0; }
+    .kpi-bd-pct { font-size: 12px; font-weight: 700; width: 36px; text-align: right; flex-shrink: 0; }
+    .kpi-panel-overlay {
+      display: none; position: fixed; inset: 0; z-index: 699;
+      background: rgba(0,0,0,0.3); backdrop-filter: blur(2px);
+    }
+    .kpi-panel-overlay.show { display: block; }
+    html.dark .kpi-panel { background: var(--card); border-color: var(--border); }
+    html.dark .kpi-stat { background: rgba(255,255,255,0.05); }
+    html.dark .kpi-breakdown-item { border-color: var(--border); }
+
     /* ── Dark mode toggle button ── */
     .theme-btn {
       width: 34px; height: 34px; border-radius: 8px;
@@ -1088,7 +1132,7 @@
     <!-- KPI ROW -->
     <div class="kpi-row">
       <!-- Revenue -->
-      <div class="kpi">
+      <div class="kpi" onclick="openKpiDrilldown('revenue')" style="cursor:pointer">
         <div class="kpi-glow" style="background:#6366f1"></div>
         <div class="kpi-top">
           <span class="kpi-lbl">Total Revenue</span>
@@ -1103,7 +1147,7 @@
       </div>
 
       <!-- Users -->
-      <div class="kpi">
+      <div class="kpi" onclick="openKpiDrilldown('users')" style="cursor:pointer">
         <div class="kpi-glow" style="background:#10b981"></div>
         <div class="kpi-top">
           <span class="kpi-lbl">Active Users</span>
@@ -1118,7 +1162,7 @@
       </div>
 
       <!-- Orders -->
-      <div class="kpi">
+      <div class="kpi" onclick="openKpiDrilldown('orders')" style="cursor:pointer">
         <div class="kpi-glow" style="background:#f59e0b"></div>
         <div class="kpi-top">
           <span class="kpi-lbl">Total Orders</span>
@@ -1133,7 +1177,7 @@
       </div>
 
       <!-- Conversion -->
-      <div class="kpi">
+      <div class="kpi" onclick="openKpiDrilldown('conversion')" style="cursor:pointer">
         <div class="kpi-glow" style="background:#ec4899"></div>
         <div class="kpi-top">
           <span class="kpi-lbl">Conversion Rate</span>
@@ -1303,6 +1347,21 @@
       </table>
     </div>
   </div>
+</div>
+
+<!-- ═══════════════════ KPI DRILL-DOWN PANEL ═══════════════════ -->
+<div class="kpi-panel-overlay" id="kpi-overlay" onclick="closeKpiPanel()"></div>
+<div class="kpi-panel" id="kpi-panel">
+  <div class="kpi-panel-head">
+    <div>
+      <div class="kpi-panel-title" id="kpi-panel-title">Revenue Breakdown</div>
+      <div class="kpi-panel-sub" id="kpi-panel-sub">Last 6 months · detailed view</div>
+    </div>
+    <button class="txn-close" onclick="closeKpiPanel()">✕</button>
+  </div>
+  <div class="kpi-stat-row" id="kpi-stat-row"></div>
+  <div class="kpi-breakdown-title" id="kpi-breakdown-title">BY SEGMENT</div>
+  <div id="kpi-breakdown-items"></div>
 </div>
 
 <!-- ═══════════════════ KEYBOARD SHORTCUTS MODAL ═══════════════════ -->
@@ -1806,6 +1865,103 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// ── KPI Drill-down ──
+const KPI_DATA = {
+  revenue: {
+    title: 'Revenue Breakdown', sub: 'Last 6 months · all plans',
+    stats: [
+      { val: '$124,832', lbl: 'Total Revenue' },
+      { val: '+12.5%',   lbl: 'vs Last Period' },
+      { val: '$20,805',  lbl: 'Avg / Month' },
+      { val: '$9,600',   lbl: 'Largest Deal' },
+    ],
+    bdTitle: 'BY PLAN',
+    breakdown: [
+      { lbl: 'Enterprise', pct: 38, color: '#6366f1' },
+      { lbl: 'Pro Annual',  pct: 27, color: '#10b981' },
+      { lbl: 'Pro Monthly', pct: 18, color: '#f59e0b' },
+      { lbl: 'Starter',     pct: 11, color: '#ec4899' },
+      { lbl: 'Add-ons',     pct: 6,  color: '#94a3b8' },
+    ],
+  },
+  users: {
+    title: 'Active Users Breakdown', sub: 'Last 6 months · all segments',
+    stats: [
+      { val: '8,429',  lbl: 'Active Users' },
+      { val: '+8.2%',  lbl: 'vs Last Period' },
+      { val: '638',    lbl: 'New This Month' },
+      { val: '94.1%',  lbl: 'Retention Rate' },
+    ],
+    bdTitle: 'BY PLAN TYPE',
+    breakdown: [
+      { lbl: 'Enterprise', pct: 12, color: '#6366f1' },
+      { lbl: 'Pro Annual',  pct: 31, color: '#10b981' },
+      { lbl: 'Pro Monthly', pct: 28, color: '#f59e0b' },
+      { lbl: 'Starter',     pct: 29, color: '#ec4899' },
+    ],
+  },
+  orders: {
+    title: 'Orders Breakdown', sub: 'Last 6 months · all statuses',
+    stats: [
+      { val: '1,284',  lbl: 'Total Orders' },
+      { val: '-2.1%',  lbl: 'vs Last Period' },
+      { val: '214',    lbl: 'Avg / Month' },
+      { val: '$97.2',  lbl: 'Avg Order Value' },
+    ],
+    bdTitle: 'BY STATUS',
+    breakdown: [
+      { lbl: 'Paid',     pct: 71, color: '#10b981' },
+      { lbl: 'Pending',  pct: 14, color: '#f59e0b' },
+      { lbl: 'Failed',   pct: 9,  color: '#ef4444' },
+      { lbl: 'Refunded', pct: 6,  color: '#8b5cf6' },
+    ],
+  },
+  conversion: {
+    title: 'Conversion Rate Breakdown', sub: 'Last 6 months · funnel analysis',
+    stats: [
+      { val: '3.24%',  lbl: 'Conversion Rate' },
+      { val: '+0.4%',  lbl: 'vs Last Period' },
+      { val: '26,014', lbl: 'Unique Visitors' },
+      { val: '843',    lbl: 'New Conversions' },
+    ],
+    bdTitle: 'BY CHANNEL',
+    breakdown: [
+      { lbl: 'Organic',    pct: 42, color: '#6366f1' },
+      { lbl: 'Direct',     pct: 28, color: '#10b981' },
+      { lbl: 'Referral',   pct: 18, color: '#f59e0b' },
+      { lbl: 'Paid Ads',   pct: 12, color: '#ec4899' },
+    ],
+  },
+};
+
+function openKpiDrilldown(type) {
+  const d = KPI_DATA[type];
+  document.getElementById('kpi-panel-title').textContent = d.title;
+  document.getElementById('kpi-panel-sub').textContent   = d.sub;
+  document.getElementById('kpi-breakdown-title').textContent = d.bdTitle;
+
+  document.getElementById('kpi-stat-row').innerHTML = d.stats.map(s => `
+    <div class="kpi-stat">
+      <div class="kpi-stat-val">${s.val}</div>
+      <div class="kpi-stat-lbl">${s.lbl}</div>
+    </div>`).join('');
+
+  document.getElementById('kpi-breakdown-items').innerHTML = d.breakdown.map(b => `
+    <div class="kpi-breakdown-item">
+      <div class="kpi-bd-label">${b.lbl}</div>
+      <div class="kpi-bd-bar-wrap"><div class="kpi-bd-bar" style="width:${b.pct}%;background:${b.color}"></div></div>
+      <div class="kpi-bd-pct" style="color:${b.color}">${b.pct}%</div>
+    </div>`).join('');
+
+  document.getElementById('kpi-panel').classList.add('open');
+  document.getElementById('kpi-overlay').classList.add('show');
+}
+
+function closeKpiPanel() {
+  document.getElementById('kpi-panel').classList.remove('open');
+  document.getElementById('kpi-overlay').classList.remove('show');
+}
+
 // ── Dark mode ──
 function toggleTheme() {
   const isDark = document.documentElement.classList.toggle('dark');
@@ -1860,6 +2016,7 @@ document.addEventListener('keydown', (e) => {
     ['kb-modal','txn-modal','report-modal'].forEach(id => {
       document.getElementById(id)?.classList.remove('open');
     });
+    closeKpiPanel();
     closeAllDropdowns();
     closeTopDropdowns();
     document.getElementById('date-dropdown')?.classList.remove('open');
