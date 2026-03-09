@@ -1010,9 +1010,9 @@
             <div class="card-sub">Monthly comparison · 2024 vs 2025</div>
           </div>
           <div class="tabs">
-            <button class="tab">Weekly</button>
-            <button class="tab on">Monthly</button>
-            <button class="tab">Yearly</button>
+            <button class="tab" onclick="switchTab(this,'weekly')">Weekly</button>
+            <button class="tab on" onclick="switchTab(this,'monthly')">Monthly</button>
+            <button class="tab" onclick="switchTab(this,'yearly')">Yearly</button>
           </div>
         </div>
         <div class="chart-wrap"><canvas id="revChart"></canvas></div>
@@ -1148,7 +1148,7 @@ mkSpark('sp3', [110,105,115,125,118,130,128,128], '#f59e0b');
 mkSpark('sp4', [2.8,2.9,3.0,3.1,3.0,3.1,3.2,3.24], '#ec4899');
 
 // ── Revenue Line Chart ──
-new Chart(document.getElementById('revChart'), {
+const revChart = new Chart(document.getElementById('revChart'), {
   type: 'line',
   data: {
     labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
@@ -1252,6 +1252,67 @@ const FEED = [
   { ico:'📧', bg:'#ecfeff', txt:'Monthly billing report sent to <strong>3 admins</strong>', time:'3 hr ago' },
   { ico:'🔐', bg:'#fce7f3', txt:'2FA enabled for <strong>james.roberts@tech.co</strong>', time:'5 hr ago' },
 ];
+
+// ── Chart Tab Data ──
+const CHART_DATA = {
+  weekly: {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    cur:    [3200, 4100, 3800, 5200, 6400, 4900, 5800],
+    prev:   [2800, 3600, 3200, 4400, 5600, 4200, 4900],
+    sub:    'Daily comparison · Week of Mar 3–9, 2025',
+    avg:    '$4.8k', best: '$6.4k · Fri', yoy: '+18.4%',
+    curLbl: 'Mar 3–9 2025', prevLbl: 'Feb 24 – Mar 2 2025',
+  },
+  monthly: {
+    labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+    cur:    [58400, 72100, 95300, 88700, 104200, 124832],
+    prev:   [45200, 58900, 71400, 66800, 79300, 95100],
+    sub:    'Monthly comparison · 2024 vs 2025',
+    avg:    '$20.8k', best: '$124.8k · Mar 2025', yoy: '113.7%',
+    curLbl: '2025', prevLbl: '2024',
+  },
+  yearly: {
+    labels: ['2020', '2021', '2022', '2023', '2024', '2025'],
+    cur:    [210000, 340000, 520000, 710000, 890000, 124832],
+    prev:   [150000, 280000, 430000, 600000, 750000, 890000],
+    sub:    'Yearly growth · 2020–2025',
+    avg:    '$556k', best: '$890k · 2024', yoy: '+102.8%',
+    curLbl: 'Actual', prevLbl: 'Target',
+  },
+};
+
+function switchTab(el, period) {
+  // Update tab active state
+  el.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+
+  const d = CHART_DATA[period];
+
+  // Update chart data
+  revChart.data.labels = d.labels;
+  revChart.data.datasets[0].data  = d.cur;
+  revChart.data.datasets[0].label = d.curLbl;
+  revChart.data.datasets[1].data  = d.prev;
+  revChart.data.datasets[1].label = d.prevLbl;
+  revChart.update('active');
+
+  // Update subtitle
+  document.querySelector('.card-sub').textContent = d.sub;
+
+  // Update mini stats
+  const minis = document.querySelectorAll('.mini-val');
+  const miniLbls = document.querySelectorAll('.mini-lbl');
+  if (minis[0]) minis[0].textContent = d.avg;
+  if (minis[1]) minis[1].textContent = d.best.split(' · ')[0];
+  if (miniLbls[1]) miniLbls[1].textContent = 'Best: ' + d.best.split(' · ')[1];
+  if (minis[2]) minis[2].textContent = d.yoy;
+
+  // Update y-axis format for weekly (no k suffix)
+  revChart.options.scales.y.ticks.callback = period === 'weekly'
+    ? v => '$' + (v / 1000).toFixed(1) + 'k'
+    : v => '$' + (v / 1000).toFixed(0) + 'k';
+  revChart.update();
+}
 
 const feedEl = document.getElementById('feed');
 FEED.forEach(f => {
