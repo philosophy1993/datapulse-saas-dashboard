@@ -897,6 +897,88 @@
       font-family: monospace;
     }
     .kb-plus { font-size: 10px; color: var(--t3); margin: 0 2px; }
+
+    /* ══════════════════════ COMMAND PALETTE ══════════════════════ */
+    .cp-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(5,8,22,0.6); backdrop-filter: blur(6px);
+      align-items: flex-start; justify-content: center;
+      padding-top: 14vh;
+    }
+    .cp-overlay.open { display: flex; }
+
+    .cp-box {
+      width: min(620px, 96vw); background: #fff;
+      border-radius: 16px; box-shadow: 0 30px 80px rgba(0,0,0,0.28);
+      border: 1px solid var(--border); overflow: hidden;
+    }
+
+    .cp-search-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 16px 18px; border-bottom: 1px solid var(--border);
+    }
+    .cp-search-icon { font-size: 18px; flex-shrink: 0; opacity: 0.5; }
+    .cp-input {
+      flex: 1; border: none; outline: none; font-size: 16px;
+      font-family: inherit; color: var(--t1); background: transparent;
+    }
+    .cp-input::placeholder { color: var(--t3); }
+    .cp-kbd {
+      font-size: 11px; color: var(--t3); flex-shrink: 0;
+      padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border);
+      background: var(--bg); font-family: monospace;
+    }
+
+    .cp-results { max-height: 420px; overflow-y: auto; }
+
+    .cp-section-label {
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.7px; color: var(--t3);
+      padding: 10px 18px 6px;
+    }
+
+    .cp-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 18px; cursor: pointer; transition: background 0.1s;
+    }
+    .cp-item:hover, .cp-item.active { background: #f5f3ff; }
+    .cp-item-ico {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .cp-item-body { flex: 1; min-width: 0; }
+    .cp-item-label { font-size: 13.5px; font-weight: 500; color: var(--t1); }
+    .cp-item-sub { font-size: 11.5px; color: var(--t3); margin-top: 1px; }
+    .cp-item-badge {
+      font-size: 10.5px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px; background: #eef2ff; color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .cp-empty {
+      text-align: center; padding: 36px 18px;
+      font-size: 14px; color: var(--t3);
+    }
+
+    .cp-footer {
+      display: flex; align-items: center; gap: 14px;
+      padding: 10px 18px; border-top: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .cp-hint { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--t3); }
+    .cp-hint-key {
+      padding: 1px 5px; border-radius: 4px; border: 1px solid var(--border);
+      background: #fff; font-family: monospace; font-size: 10.5px;
+    }
+
+    /* dark overrides */
+    html.dark .cp-box { background: #1a1c2e; border-color: rgba(255,255,255,0.1); }
+    html.dark .cp-search-row { border-color: rgba(255,255,255,0.08); }
+    html.dark .cp-item:hover, html.dark .cp-item.active { background: rgba(99,102,241,0.12); }
+    html.dark .cp-footer { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08); }
+    html.dark .cp-kbd, html.dark .cp-hint-key { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
+    html.dark .cp-item-badge { background: rgba(99,102,241,0.2); }
   </style>
 </head>
 <body>
@@ -1049,12 +1131,10 @@
       <span>Home</span><span>›</span><span style="color:var(--t2)">Overview</span>
     </div>
     <div class="spacer"></div>
-    <div class="search" id="search-box">
+    <div class="search" id="search-box" onclick="openCp()" style="cursor:pointer" title="Search (⌘K)">
       <span style="color:var(--t3);font-size:14px">🔍</span>
-      <input type="text" id="search-input" placeholder="Search orders, customers…"
-        oninput="searchTable(this.value)"
-        onfocus="document.getElementById('search-box').classList.add('active')"
-        onblur="document.getElementById('search-box').classList.remove('active')">
+      <span style="font-size:12.5px;color:var(--t3);flex:1">Search pages, actions, customers…</span>
+      <span style="font-size:10.5px;color:var(--t3);padding:1px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg);font-family:monospace;flex-shrink:0">⌘K</span>
     </div>
     <div class="top-actions">
       <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle dark mode (D)">🌙</button>
@@ -1433,6 +1513,24 @@
   <div id="kpi-breakdown-items"></div>
 </div>
 
+<!-- ═══════════════════ COMMAND PALETTE ═══════════════════ -->
+<div class="cp-overlay" id="cp-overlay" onclick="closeCp(event)">
+  <div class="cp-box" onclick="event.stopPropagation()">
+    <div class="cp-search-row">
+      <span class="cp-search-icon">🔍</span>
+      <input class="cp-input" id="cp-input" placeholder="Search pages, actions, customers…"
+        oninput="cpSearch(this.value)" autocomplete="off" spellcheck="false">
+      <span class="cp-kbd">Esc</span>
+    </div>
+    <div class="cp-results" id="cp-results"></div>
+    <div class="cp-footer">
+      <div class="cp-hint"><span class="cp-hint-key">↑↓</span> Navigate</div>
+      <div class="cp-hint"><span class="cp-hint-key">↵</span> Select</div>
+      <div class="cp-hint"><span class="cp-hint-key">Esc</span> Close</div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════ KEYBOARD SHORTCUTS MODAL ═══════════════════ -->
 <div class="modal-backdrop" id="kb-modal" onclick="closeKbModal(event)">
   <div class="kb-modal-box" onclick="event.stopPropagation()">
@@ -1447,6 +1545,7 @@
     <div class="kb-row"><span>Go to Settings</span><span class="kb-keys"><span class="kb-shortcut">G</span><span class="kb-plus">then</span><span class="kb-shortcut">S</span></span></div>
 
     <div class="kb-section-title">Search & Filters</div>
+    <div class="kb-row"><span>Command palette</span><span class="kb-keys"><span class="kb-shortcut">⌘</span><span class="kb-plus">+</span><span class="kb-shortcut">K</span></span></div>
     <div class="kb-row"><span>Focus search bar</span><span class="kb-keys"><span class="kb-shortcut">/</span></span></div>
     <div class="kb-row"><span>Clear search</span><span class="kb-keys"><span class="kb-shortcut">Esc</span></span></div>
 
@@ -1976,6 +2075,142 @@ function buildNotifPrefs() {
     </div>`).join('');
 }
 
+// ══════════════════════ COMMAND PALETTE ══════════════════════
+const CP_COMMANDS = [
+  // Navigation
+  { type:'nav', ico:'🏠', bg:'#eef2ff', label:'Dashboard',       sub:'Overview · KPI, charts, transactions', badge:'Page',   action:()=>navigate(document.querySelector('.nav-item'),            'Dashboard','Overview') },
+  { type:'nav', ico:'📈', bg:'#d1fae5', label:'Analytics',       sub:'Deep-dive analytics and trends',        badge:'Page',   action:()=>navigate(document.querySelectorAll('.nav-item')[1],      'Analytics','Overview') },
+  { type:'nav', ico:'🛒', bg:'#fef3c7', label:'Orders',          sub:'All orders and fulfillment',            badge:'Page',   action:()=>navigate(document.querySelectorAll('.nav-item')[2],      'Orders','Overview') },
+  { type:'nav', ico:'👥', bg:'#fce7f3', label:'All Customers',   sub:'Customer list and segments',            badge:'Page',   action:()=>navigate(document.querySelectorAll('.nav-item')[4],      'All Customers','Customers') },
+  { type:'nav', ico:'💰', bg:'#d1fae5', label:'Revenue',         sub:'Revenue breakdown and forecasts',       badge:'Page',   action:()=>navigate(document.querySelectorAll('.nav-item')[7],      'Revenue','Finance') },
+  { type:'nav', ico:'⚙️', bg:'#f1f5f9', label:'Settings',        sub:'Profile, notifications, account',       badge:'Page',   action:()=>{ const el=document.querySelectorAll('.nav-item')[10]; if(el) navigate(el,'Settings','System'); } },
+
+  // Actions
+  { type:'action', ico:'⬇',  bg:'#eef2ff', label:'Export as CSV',         sub:'Download all transactions',            badge:'Action', action:()=>exportCSV() },
+  { type:'action', ico:'➕',  bg:'#d1fae5', label:'New Report',             sub:'Create a custom analytics report',     badge:'Action', action:()=>openReportModal() },
+  { type:'action', ico:'📋',  bg:'#fef3c7', label:'View All Transactions',  sub:'Full transaction list with filters',   badge:'Action', action:()=>openTxnModal() },
+  { type:'action', ico:'🌙',  bg:'#f3e8ff', label:'Toggle Dark Mode',       sub:'Switch between light and dark theme',  badge:'Action', action:()=>toggleTheme() },
+  { type:'action', ico:'🔔',  bg:'#fce7f3', label:'Notifications',          sub:'View recent activity alerts',          badge:'Action', action:()=>toggleNotifPanel() },
+  { type:'action', ico:'⌨️',  bg:'#ecfeff', label:'Keyboard Shortcuts',     sub:'View all keyboard shortcuts',          badge:'Action', action:()=>openKbModal() },
+
+  // KPI drilldown
+  { type:'kpi', ico:'💰', bg:'#eef2ff', label:'Revenue Breakdown',     sub:'$124,832 · +12.5% vs last period',  badge:'KPI', action:()=>openKpiDrilldown('revenue') },
+  { type:'kpi', ico:'👥', bg:'#d1fae5', label:'Active Users Breakdown', sub:'8,429 · +8.2% vs last period',     badge:'KPI', action:()=>openKpiDrilldown('users') },
+  { type:'kpi', ico:'🛒', bg:'#fef3c7', label:'Orders Breakdown',       sub:'1,284 · -2.1% vs last period',     badge:'KPI', action:()=>openKpiDrilldown('orders') },
+  { type:'kpi', ico:'📊', bg:'#fce7f3', label:'Conversion Breakdown',   sub:'3.24% · +0.4% vs last period',     badge:'KPI', action:()=>openKpiDrilldown('conversion') },
+];
+
+// Customer entries built lazily from ORDERS data
+function cpGetCustomerCommands() {
+  return (window.ALL_ORDERS || window.ORDERS || []).map(o => ({
+    type:'customer', ico:'👤', bg:'#f8fafc',
+    label: o.name, sub:`${o.email} · ${o.plan} · ${o.amt}`,
+    badge:'Customer',
+    action: ()=>{ closeCp(); showToast(`Viewing ${o.name}`, 'info'); }
+  }));
+}
+
+let cpActiveIdx = -1;
+let cpFilteredItems = [];
+
+function openCp() {
+  document.getElementById('cp-overlay').classList.add('open');
+  const inp = document.getElementById('cp-input');
+  inp.value = '';
+  cpSearch('');
+  setTimeout(()=>inp.focus(), 30);
+}
+
+function closeCp(e) {
+  if (!e || e.target === document.getElementById('cp-overlay')) {
+    document.getElementById('cp-overlay').classList.remove('open');
+    cpActiveIdx = -1;
+  }
+}
+
+function cpSearch(q) {
+  const term = q.toLowerCase().trim();
+  const all = [...CP_COMMANDS, ...cpGetCustomerCommands()];
+
+  cpFilteredItems = term
+    ? all.filter(c => (c.label + c.sub).toLowerCase().includes(term))
+    : all.filter(c => c.type !== 'customer'); // hide customers when no query
+
+  cpActiveIdx = cpFilteredItems.length > 0 ? 0 : -1;
+  cpRender(term);
+}
+
+function cpRender(term = '') {
+  const el = document.getElementById('cp-results');
+  if (cpFilteredItems.length === 0) {
+    el.innerHTML = `<div class="cp-empty">No results for "<strong>${term}</strong>"</div>`;
+    return;
+  }
+
+  // Group by type
+  const groups = { nav:'Pages', action:'Actions', kpi:'KPI Breakdown', customer:'Customers' };
+  const seen = new Set();
+  let html = '';
+  let globalIdx = 0;
+
+  for (const [typeKey, groupLabel] of Object.entries(groups)) {
+    const items = cpFilteredItems.filter(c => c.type === typeKey);
+    if (items.length === 0) continue;
+    html += `<div class="cp-section-label">${groupLabel}</div>`;
+    for (const item of items) {
+      const idx = cpFilteredItems.indexOf(item);
+      const isActive = idx === cpActiveIdx;
+      // Highlight matching text
+      const labelHl = term ? item.label.replace(new RegExp(`(${term})`, 'gi'), '<mark style="background:#c7d2fe;border-radius:2px">$1</mark>') : item.label;
+      html += `
+        <div class="cp-item${isActive ? ' active' : ''}" data-idx="${idx}"
+          onmouseenter="cpSetActive(${idx})"
+          onclick="cpExecute(${idx})">
+          <div class="cp-item-ico" style="background:${item.bg}">${item.ico}</div>
+          <div class="cp-item-body">
+            <div class="cp-item-label">${labelHl}</div>
+            <div class="cp-item-sub">${item.sub}</div>
+          </div>
+          <span class="cp-item-badge">${item.badge}</span>
+        </div>`;
+      globalIdx++;
+    }
+  }
+  el.innerHTML = html;
+  // Scroll active item into view
+  const activeEl = el.querySelector('.cp-item.active');
+  if (activeEl) activeEl.scrollIntoView({ block:'nearest' });
+}
+
+function cpSetActive(idx) {
+  cpActiveIdx = idx;
+  cpRender(document.getElementById('cp-input').value.toLowerCase().trim());
+}
+
+function cpExecute(idx) {
+  const item = cpFilteredItems[idx];
+  if (!item) return;
+  closeCp();
+  setTimeout(() => item.action(), 50);
+}
+
+function cpMoveActive(dir) {
+  if (cpFilteredItems.length === 0) return;
+  cpActiveIdx = (cpActiveIdx + dir + cpFilteredItems.length) % cpFilteredItems.length;
+  cpRender(document.getElementById('cp-input').value.toLowerCase().trim());
+  const el = document.getElementById('cp-results');
+  const activeEl = el.querySelector('.cp-item.active');
+  if (activeEl) activeEl.scrollIntoView({ block:'nearest' });
+}
+
+// Keyboard navigation inside palette
+document.getElementById('cp-input').addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown')  { e.preventDefault(); cpMoveActive(1); }
+  if (e.key === 'ArrowUp')    { e.preventDefault(); cpMoveActive(-1); }
+  if (e.key === 'Enter')      { e.preventDefault(); cpExecute(cpActiveIdx); }
+  if (e.key === 'Escape')     { closeCp(); }
+});
+
 // ── KPI Drill-down ──
 const KPI_DATA = {
   revenue: {
@@ -2118,12 +2353,21 @@ let gKeyBuffer = '';
 let gKeyTimer  = null;
 
 document.addEventListener('keydown', (e) => {
+  // Cmd+K / Ctrl+K — open command palette (fires even inside inputs)
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    const isOpen = document.getElementById('cp-overlay').classList.contains('open');
+    isOpen ? closeCp() : openCp();
+    return;
+  }
+
   // Skip if focus is inside an input/textarea/select
   if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
   const key = e.key;
 
   // Close any open modal with Escape
   if (key === 'Escape') {
+    closeCp();
     ['kb-modal','txn-modal','report-modal'].forEach(id => {
       document.getElementById(id)?.classList.remove('open');
     });
