@@ -546,6 +546,61 @@
     }
 
     .demo-chip strong { font-weight: 700; }
+
+    /* ── Transactions modal ── */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(5,8,22,0.55); backdrop-filter: blur(4px);
+      z-index: 800; align-items: flex-start; justify-content: center;
+      padding-top: 60px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .txn-modal {
+      background: #fff; border-radius: 16px; padding: 28px;
+      width: min(900px, 96vw); max-height: calc(100vh - 120px);
+      overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+    }
+    .txn-modal-head {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+    }
+    .txn-modal-title { font-size: 18px; font-weight: 800; }
+    .txn-modal-sub { font-size: 12.5px; color: var(--t3); margin-top: 3px; }
+    .txn-close {
+      width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border);
+      background: #fff; font-size: 16px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; transition: background 0.15s;
+    }
+    .txn-close:hover { background: var(--bg); }
+    .txn-search {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 14px; margin-bottom: 16px;
+    }
+    .txn-search input {
+      border: none; background: none; font-size: 13px; color: var(--t1);
+      outline: none; width: 100%; font-family: inherit;
+    }
+    .txn-filter-row {
+      display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .txn-filter {
+      padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: 1.5px solid var(--border); background: #fff;
+      color: var(--t2); transition: all 0.15s; font-family: inherit;
+    }
+    .txn-filter.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+      padding: 13px 18px; border-radius: 10px; font-size: 13.5px; font-weight: 500;
+      color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      transform: translateY(16px); opacity: 0; transition: all 0.28s ease;
+      max-width: 340px; pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast-info    { background: #6366f1; }
+    .toast-success { background: #10b981; }
   </style>
 </head>
 <body>
@@ -820,7 +875,7 @@
             <div class="card-ttl">Recent Transactions</div>
             <div class="card-sub">Latest 8 orders</div>
           </div>
-          <button class="btn" style="font-size:12px;padding:6px 12px">View all →</button>
+          <button class="btn" style="font-size:12px;padding:6px 12px" onclick="openTxnModal()">View all →</button>
         </div>
         <div class="tbl-wrap">
           <table>
@@ -853,6 +908,41 @@
     </div>
   </div>
 </main>
+
+<!-- ═══════════════════ TRANSACTIONS MODAL ═══════════════════ -->
+<div class="modal-backdrop" id="txn-modal" onclick="closeTxnModal(event)">
+  <div class="txn-modal" onclick="event.stopPropagation()">
+    <div class="txn-modal-head">
+      <div>
+        <div class="txn-modal-title">All Transactions</div>
+        <div class="txn-modal-sub" id="txn-count">Showing all transactions</div>
+      </div>
+      <button class="txn-close" onclick="closeTxnModal()">✕</button>
+    </div>
+    <div class="txn-search">
+      <span style="color:var(--t3);font-size:14px">🔍</span>
+      <input type="text" placeholder="Search transactions…" oninput="filterTxnModal(this.value)">
+    </div>
+    <div class="txn-filter-row">
+      <button class="txn-filter active" onclick="filterTxnStatus(this,'all')">All</button>
+      <button class="txn-filter" onclick="filterTxnStatus(this,'paid')">Paid</button>
+      <button class="txn-filter" onclick="filterTxnStatus(this,'pend')">Pending</button>
+      <button class="txn-filter" onclick="filterTxnStatus(this,'fail')">Failed</button>
+      <button class="txn-filter" onclick="filterTxnStatus(this,'refund')">Refunded</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Order</th><th>Customer</th><th>Plan / Product</th>
+            <th>Amount</th><th>Status</th><th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="txn-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <script>
 Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
@@ -956,6 +1046,21 @@ const ORDERS = [
   { id:'#7284', name:'Lucas Anderson', email:'l.anderson@bigco.com', plan:'Pro Monthly', amt:'$199', status:'paid', date:'Mar 3', col:'#14b8a6' },
 ];
 
+// Extended orders list for the "View all" modal
+const ALL_ORDERS = [
+  ...ORDERS,
+  { id:'#7283', name:'Sophie Turner',   email:'s.turner@media.io',    plan:'Starter Plan',        amt:'$348',   status:'paid',   date:'Mar 3',  col:'#f43f5e' },
+  { id:'#7282', name:'Ethan Harris',    email:'e.harris@cloud.co',    plan:'Pro Annual',           amt:'$2,388', status:'paid',   date:'Mar 2',  col:'#3b82f6' },
+  { id:'#7281', name:'Chloe Wilson',    email:'chloe@agency.net',     plan:'Add-on: Exports',      amt:'$29',    status:'pend',   date:'Mar 2',  col:'#a855f7' },
+  { id:'#7280', name:'Ryan Brown',      email:'r.brown@fintech.io',   plan:'Enterprise Annual',    amt:'$9,600', status:'paid',   date:'Mar 1',  col:'#0ea5e9' },
+  { id:'#7279', name:'Isla Garcia',     email:'isla@startup.co',      plan:'Pro Monthly',          amt:'$199',   status:'fail',   date:'Mar 1',  col:'#22c55e' },
+  { id:'#7278', name:'Mason Lee',       email:'mason@devco.io',       plan:'Pro Annual',           amt:'$2,388', status:'refund', date:'Feb 28', col:'#f59e0b' },
+  { id:'#7277', name:'Aria Patel',      email:'a.patel@saas.com',     plan:'Starter Plan',         amt:'$348',   status:'paid',   date:'Feb 28', col:'#6366f1' },
+  { id:'#7276', name:'Logan Scott',     email:'l.scott@corp.com',     plan:'Enterprise Annual',    amt:'$9,600', status:'paid',   date:'Feb 27', col:'#ec4899' },
+  { id:'#7275', name:'Zoe Mitchell',    email:'zoe@ecomm.store',      plan:'Pro Monthly',          amt:'$199',   status:'paid',   date:'Feb 27', col:'#14b8a6' },
+  { id:'#7274', name:'Jack Robinson',   email:'j.robinson@biz.net',   plan:'Add-on: Analytics',   amt:'$49',    status:'paid',   date:'Feb 26', col:'#f97316' },
+];
+
 const LABELS = { paid:'Paid', pend:'Pending', fail:'Failed', refund:'Refunded' };
 
 const tbody = document.getElementById('tbody');
@@ -984,6 +1089,71 @@ const FEED = [
   { ico:'📧', bg:'#ecfeff', txt:'Monthly billing report sent to <strong>3 admins</strong>', time:'3 hr ago' },
   { ico:'🔐', bg:'#fce7f3', txt:'2FA enabled for <strong>james.roberts@tech.co</strong>', time:'5 hr ago' },
 ];
+
+// ── Toast utility ──
+function showToast(msg, type = 'info') {
+  const t = Object.assign(document.createElement('div'), {
+    className: `toast toast-${type}`, textContent: msg
+  });
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+// ── Transactions modal ──
+let txnActiveStatus = 'all';
+let txnSearchTerm   = '';
+
+function buildTxnRow(o) {
+  return `<tr data-status="${o.status}" data-text="${(o.id+o.name+o.email+o.plan+o.amt+o.status+o.date).toLowerCase()}">
+    <td><span class="oid">${o.id}</span></td>
+    <td><div class="cust-cell">
+      <div class="cust-ava" style="background:${o.col}">${o.name.split(' ').map(n=>n[0]).join('')}</div>
+      <div><div class="cust-n">${o.name}</div><div class="cust-e">${o.email}</div></div>
+    </div></td>
+    <td style="color:var(--t2);font-size:12.5px">${o.plan}</td>
+    <td><span class="amt">${o.amt}</span></td>
+    <td><span class="badge ${o.status}">${LABELS[o.status]}</span></td>
+    <td style="color:var(--t3);font-size:12px">${o.date}</td>
+  </tr>`;
+}
+
+function renderTxnModal() {
+  const tbody = document.getElementById('txn-tbody');
+  let rows = ALL_ORDERS.filter(o =>
+    (txnActiveStatus === 'all' || o.status === txnActiveStatus) &&
+    (txnSearchTerm === '' || (o.id+o.name+o.email+o.plan).toLowerCase().includes(txnSearchTerm))
+  );
+  tbody.innerHTML = rows.map(buildTxnRow).join('');
+  document.getElementById('txn-count').textContent =
+    `Showing ${rows.length} of ${ALL_ORDERS.length} transactions`;
+}
+
+function openTxnModal() {
+  txnActiveStatus = 'all';
+  txnSearchTerm = '';
+  document.querySelectorAll('.txn-filter').forEach((b, i) => b.classList.toggle('active', i === 0));
+  renderTxnModal();
+  document.getElementById('txn-modal').classList.add('open');
+}
+
+function closeTxnModal(e) {
+  if (!e || e.target === document.getElementById('txn-modal')) {
+    document.getElementById('txn-modal').classList.remove('open');
+  }
+}
+
+function filterTxnModal(q) {
+  txnSearchTerm = q.toLowerCase().trim();
+  renderTxnModal();
+}
+
+function filterTxnStatus(el, status) {
+  txnActiveStatus = status;
+  document.querySelectorAll('.txn-filter').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTxnModal();
+}
 
 const feedEl = document.getElementById('feed');
 FEED.forEach(f => {
