@@ -546,6 +546,60 @@
     }
 
     .demo-chip strong { font-weight: 700; }
+
+    /* ── Date range dropdown ── */
+    .date-dropdown {
+      display: none; position: absolute; right: 0; top: calc(100% + 6px);
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 400; min-width: 200px; padding: 6px;
+    }
+    .date-dropdown.open { display: block; }
+    .date-opt {
+      padding: 9px 14px; border-radius: 7px; font-size: 13px; font-weight: 500;
+      color: var(--t1); cursor: pointer; transition: background 0.1s;
+    }
+    .date-opt:hover { background: var(--bg); }
+    .date-opt.selected { background: #eef2ff; color: var(--accent); }
+
+    /* ── New Report modal ── */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(5,8,22,0.55); backdrop-filter: blur(4px);
+      z-index: 800; align-items: center; justify-content: center;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: 16px; padding: 32px;
+      width: 460px; box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+    }
+    .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+    .modal-sub { font-size: 13px; color: var(--t3); margin-bottom: 24px; }
+    .modal-row { margin-bottom: 16px; }
+    .modal-label { font-size: 12.5px; font-weight: 600; margin-bottom: 6px; display: block; }
+    .modal-input {
+      width: 100%; padding: 10px 13px; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: 13.5px; font-family: inherit; outline: none;
+      transition: border-color 0.15s;
+    }
+    .modal-input:focus { border-color: var(--accent); }
+    .modal-select {
+      width: 100%; padding: 10px 13px; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: 13.5px; font-family: inherit; outline: none;
+      background: #fff; cursor: pointer;
+    }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+      padding: 13px 18px; border-radius: 10px; font-size: 13.5px; font-weight: 500;
+      color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      transform: translateY(16px); opacity: 0; transition: all 0.28s ease;
+      max-width: 340px; pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast-info    { background: #6366f1; }
+    .toast-success { background: #10b981; }
   </style>
 </head>
 <body>
@@ -698,9 +752,19 @@
         <div class="period-sub">📅 Oct 1, 2024 – Mar 7, 2025 &nbsp;·&nbsp; Auto-refreshes every 5 min</div>
       </div>
       <div class="period-right">
-        <button class="btn">📅 Last 6 months ⌄</button>
-        <button class="btn">⬇ Export</button>
-        <button class="btn btn-accent">+ New Report</button>
+        <div style="position:relative">
+          <button class="btn" id="date-btn" onclick="toggleDateDropdown()">📅 <span id="date-label">Last 6 months</span> ⌄</button>
+          <div class="date-dropdown" id="date-dropdown">
+            <div class="date-opt" onclick="selectDateRange(this,'Last 7 days')">Last 7 days</div>
+            <div class="date-opt" onclick="selectDateRange(this,'Last 30 days')">Last 30 days</div>
+            <div class="date-opt selected" onclick="selectDateRange(this,'Last 6 months')">Last 6 months</div>
+            <div class="date-opt" onclick="selectDateRange(this,'Last 12 months')">Last 12 months</div>
+            <div class="date-opt" onclick="selectDateRange(this,'Year to date')">Year to date</div>
+            <div class="date-opt" onclick="selectDateRange(this,'All time')">All time</div>
+          </div>
+        </div>
+        <button class="btn" onclick="exportCSV()">⬇ Export</button>
+        <button class="btn btn-accent" onclick="openReportModal()">+ New Report</button>
       </div>
     </div>
 
@@ -854,6 +918,41 @@
   </div>
 </main>
 
+<!-- ═══════════════════ NEW REPORT MODAL ═══════════════════ -->
+<div class="modal-backdrop" id="report-modal" onclick="closeReportModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-title">Create New Report</div>
+    <div class="modal-sub">Configure your custom analytics report</div>
+    <div class="modal-row">
+      <label class="modal-label">Report Name</label>
+      <input class="modal-input" type="text" id="report-name" placeholder="e.g. Q1 Revenue Summary">
+    </div>
+    <div class="modal-row">
+      <label class="modal-label">Report Type</label>
+      <select class="modal-select" id="report-type">
+        <option>Revenue Analysis</option>
+        <option>User Growth</option>
+        <option>Subscription Metrics</option>
+        <option>Churn Report</option>
+        <option>Custom</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <label class="modal-label">Date Range</label>
+      <select class="modal-select" id="report-range">
+        <option>Last 30 days</option>
+        <option>Last 6 months</option>
+        <option selected>Last 12 months</option>
+        <option>Year to date</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeReportModal()">Cancel</button>
+      <button class="btn btn-accent" onclick="createReport()">Create Report →</button>
+    </div>
+  </div>
+</div>
+
 <script>
 Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
 Chart.defaults.color = '#94a3b8';
@@ -995,6 +1094,72 @@ FEED.forEach(f => {
         <div class="feed-time">${f.time}</div>
       </div>
     </div>`;
+});
+
+// ── Toast utility ──
+function showToast(msg, type = 'info') {
+  const t = Object.assign(document.createElement('div'), {
+    className: `toast toast-${type}`, textContent: msg
+  });
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+// ── Dashboard Controls: Date range picker ──
+function toggleDateDropdown() {
+  const dd = document.getElementById('date-dropdown');
+  dd.classList.toggle('open');
+}
+
+function selectDateRange(el, label) {
+  document.getElementById('date-label').textContent = label;
+  document.querySelectorAll('.date-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('date-dropdown').classList.remove('open');
+  showToast(`Date range updated: ${label}`, 'success');
+}
+
+// ── Dashboard Controls: Export CSV ──
+function exportCSV() {
+  const headers = ['Order', 'Customer', 'Email', 'Plan', 'Amount', 'Status', 'Date'];
+  const rows = ORDERS.map(o => [o.id, o.name, o.email, o.plan, o.amt, o.status, o.date]);
+  const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: 'datapulse-transactions.csv' });
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Transactions exported as CSV', 'success');
+}
+
+// ── Dashboard Controls: New Report modal ──
+function openReportModal() {
+  document.getElementById('report-modal').classList.add('open');
+}
+
+function closeReportModal(e) {
+  if (!e || e.target === document.getElementById('report-modal')) {
+    document.getElementById('report-modal').classList.remove('open');
+  }
+}
+
+function createReport() {
+  const name = document.getElementById('report-name').value.trim();
+  const type = document.getElementById('report-type').value;
+  const range = document.getElementById('report-range').value;
+  if (!name) {
+    document.getElementById('report-name').focus();
+    return;
+  }
+  document.getElementById('report-modal').classList.remove('open');
+  showToast(`Report "${name}" (${type} · ${range}) created!`, 'success');
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#date-btn') && !e.target.closest('.date-dropdown')) {
+    document.getElementById('date-dropdown')?.classList.remove('open');
+  }
 });
 </script>
 </body>
