@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataPulse — SaaS Analytics Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar: #0d0f1a;
+      --sidebar-border: rgba(255,255,255,0.06);
+      --accent: #6366f1;
+      --accent2: #8b5cf6;
+      --accent-glow: rgba(99,102,241,0.25);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --pink: #ec4899;
+      --cyan: #06b6d4;
+      --bg: #f0f2f9;
+      --card: #ffffff;
+      --border: #e5e9f2;
+      --t1: #0f172a;
+      --t2: #475569;
+      --t3: #94a3b8;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--t1);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ══════════════════════ SIDEBAR ══════════════════════ */
+    .sidebar {
+      width: 248px;
+      background: var(--sidebar);
+      position: fixed;
+      inset: 0 auto 0 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 200;
+    }
+
+    .sidebar-top {
+      padding: 22px 18px 18px;
+      border-bottom: 1px solid var(--sidebar-border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      box-shadow: 0 4px 14px rgba(99,102,241,0.45);
+    }
+
+    .logo-text {
+      font-size: 17px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.4px;
+    }
+
+    .logo-pro {
+      font-size: 9px;
+      font-weight: 700;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      color: white;
+      padding: 2px 5px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+      letter-spacing: 0.5px;
+    }
+
+    .workspace-btn {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+
+    .ws-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
+    .ws-name {
+      flex: 1;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.85);
+    }
+
+    .ws-chevron { font-size: 10px; color: rgba(255,255,255,0.3); }
+
+    .nav { flex: 1; overflow-y: auto; padding: 12px 10px; }
+
+    .nav-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+      padding: 14px 8px 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: rgba(255,255,255,0.5);
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: all 0.15s;
+      margin-bottom: 1px;
+      position: relative;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+
+    .nav-item.active {
+      background: linear-gradient(90deg, rgba(99,102,241,0.3), rgba(99,102,241,0.08));
+      color: #fff;
+    }
+
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 6px; bottom: 6px;
+      width: 3px;
+      background: var(--accent);
+      border-radius: 0 3px 3px 0;
+    }
+
+    .nav-icon { width: 18px; text-align: center; font-size: 15px; }
+
+    .nav-badge {
+      margin-left: auto;
+      background: rgba(99,102,241,0.3);
+      color: #a5b4fc;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    .nav-badge.red { background: rgba(239,68,68,0.25); color: #fca5a5; }
+
+    .sidebar-footer {
+      padding: 14px 10px;
+      border-top: 1px solid var(--sidebar-border);
+    }
+
+    .user-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .user-row:hover { background: rgba(255,255,255,0.06); }
+
+    .user-ava {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+
+    .user-name { font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,0.85); }
+    .user-role { font-size: 10.5px; color: rgba(255,255,255,0.35); margin-top: 1px; }
+    .user-more { margin-left: auto; font-size: 14px; color: rgba(255,255,255,0.25); }
+
+    /* ══════════════════════ MAIN ══════════════════════ */
+    .main { margin-left: 248px; flex: 1; display: flex; flex-direction: column; }
+
+    /* HEADER */
+    .topbar {
+      height: 60px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center;
+      padding: 0 28px; gap: 16px;
+    }
+
+    .page-title { font-size: 16px; font-weight: 700; color: var(--t1); }
+
+    .breadcrumb {
+      font-size: 12px;
+      color: var(--t3);
+      display: flex; align-items: center; gap: 6px; margin-left: 8px;
+    }
+
+    .spacer { flex: 1; }
+
+    .search {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 14px; width: 220px;
+    }
+
+    .search input {
+      border: none; background: none; font-size: 12.5px;
+      color: var(--t1); outline: none; width: 100%; font-family: inherit;
+    }
+
+    .search input::placeholder { color: var(--t3); }
+
+    .top-actions { display: flex; align-items: center; gap: 8px; }
+
+    .icon-btn2 {
+      width: 34px; height: 34px;
+      border-radius: 8px; border: 1px solid var(--border);
+      background: #fff; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; font-size: 15px;
+      position: relative; transition: background 0.15s;
+    }
+
+    .icon-btn2:hover { background: var(--bg); }
+
+    .notif-pip {
+      position: absolute; top: 5px; right: 5px;
+      width: 7px; height: 7px;
+      background: var(--danger); border-radius: 50%;
+      border: 2px solid #fff;
+    }
+
+    .top-ava {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #ec4899);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #fff; cursor: pointer;
+    }
+
+    /* ══════════════════════ PAGE BODY ══════════════════════ */
+    .body { padding: 24px 28px; flex: 1; }
+
+    /* Period bar */
+    .period-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 22px;
+    }
+
+    .period-left { display: flex; flex-direction: column; gap: 2px; }
+    .period-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+    .period-sub { font-size: 12px; color: var(--t3); }
+
+    .period-right { display: flex; align-items: center; gap: 8px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 8px; font-size: 12.5px;
+      font-weight: 500; cursor: pointer; border: 1px solid var(--border);
+      background: #fff; color: var(--t1); font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .btn:hover { background: var(--bg); }
+
+    .btn-accent {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff; border-color: transparent;
+      box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+    }
+
+    .btn-accent:hover { box-shadow: 0 4px 20px rgba(99,102,241,0.5); filter: brightness(1.05); }
+
+    /* ── KPI GRID ── */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .kpi {
+      background: #fff; border-radius: 14px;
+      border: 1px solid var(--border); padding: 20px;
+      position: relative; overflow: hidden;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+
+    .kpi:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.08); transform: translateY(-2px); }
+
+    .kpi-glow {
+      position: absolute; top: -20px; right: -20px;
+      width: 80px; height: 80px; border-radius: 50%;
+      opacity: 0.12;
+    }
+
+    .kpi-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+
+    .kpi-lbl { font-size: 12px; font-weight: 500; color: var(--t2); }
+
+    .kpi-ico {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 19px;
+    }
+
+    .kpi-val { font-size: 28px; font-weight: 800; letter-spacing: -1px; line-height: 1; margin-bottom: 8px; }
+
+    .kpi-delta {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 12px; font-weight: 600;
+    }
+
+    .delta-chip {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 7px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    }
+
+    .delta-chip.up { background: #d1fae5; color: #065f46; }
+    .delta-chip.dn { background: #fee2e2; color: #991b1b; }
+
+    .kpi-cmp { font-size: 11px; color: var(--t3); margin-top: 2px; }
+
+    /* Sparkline */
+    .spark { margin-top: 14px; height: 44px; position: relative; }
+
+    /* ── CHARTS ROW ── */
+    .charts-row {
+      display: grid; grid-template-columns: 5fr 3fr;
+      gap: 18px; margin-bottom: 20px;
+    }
+
+    .card { background: #fff; border-radius: 14px; border: 1px solid var(--border); padding: 22px; }
+
+    .card-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+
+    .card-ttl { font-size: 14.5px; font-weight: 700; }
+    .card-sub { font-size: 11.5px; color: var(--t3); margin-top: 3px; }
+
+    .tabs { display: flex; gap: 3px; }
+
+    .tab {
+      padding: 5px 10px; border-radius: 6px; font-size: 12px;
+      font-weight: 500; cursor: pointer; border: none;
+      background: none; color: var(--t3); font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .tab.on { background: var(--bg); color: var(--accent); font-weight: 600; }
+
+    .chart-wrap { position: relative; height: 230px; }
+
+    /* ── METRICS ROW (mini cards) ── */
+    .mini-row {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 14px; margin-top: 18px;
+    }
+
+    .mini-card {
+      background: var(--bg); border-radius: 10px;
+      padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+    }
+
+    .mini-ico {
+      width: 34px; height: 34px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0;
+    }
+
+    .mini-val { font-size: 15px; font-weight: 700; }
+    .mini-lbl { font-size: 11px; color: var(--t3); }
+
+    /* ── BOTTOM GRID ── */
+    .btm { display: grid; grid-template-columns: 3fr 1.2fr; gap: 18px; }
+
+    /* TABLE */
+    .tbl-wrap { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead th {
+      text-align: left; font-size: 10.5px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.6px;
+      color: var(--t3); padding: 0 12px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f8f9ff; }
+    tbody td { padding: 11px 12px; font-size: 13px; vertical-align: middle; }
+
+    .oid { font-family: 'SF Mono', monospace; font-size: 11.5px; color: var(--t3); font-weight: 600; }
+
+    .cust-cell { display: flex; align-items: center; gap: 9px; }
+
+    .cust-ava {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+
+    .cust-n { font-size: 13px; font-weight: 600; }
+    .cust-e { font-size: 11px; color: var(--t3); }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    }
+
+    .badge::before { content: '●'; font-size: 7px; }
+    .badge.paid   { background: #d1fae5; color: #065f46; }
+    .badge.pend   { background: #fef3c7; color: #92400e; }
+    .badge.fail   { background: #fee2e2; color: #991b1b; }
+    .badge.refund { background: #f3f4f6; color: #374151; }
+
+    .amt { font-weight: 700; font-size: 13px; }
+
+    /* ACTIVITY FEED */
+    .feed { display: flex; flex-direction: column; gap: 0; }
+
+    .feed-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    .feed-item:last-child { border-bottom: none; }
+
+    .feed-ico {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0; margin-top: 1px;
+    }
+
+    .feed-body { flex: 1; min-width: 0; }
+    .feed-txt { font-size: 12.5px; color: var(--t1); line-height: 1.4; }
+    .feed-txt strong { font-weight: 600; }
+    .feed-time { font-size: 11px; color: var(--t3); margin-top: 2px; }
+
+    /* ══════════════════════ LOGIN OVERLAY ══════════════════════ */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(5, 8, 22, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 999; display: flex; align-items: center; justify-content: center;
+    }
+
+    .login-box {
+      background: #fff; border-radius: 18px; padding: 42px 44px;
+      width: 420px; box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+    }
+
+    .lbox-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; }
+
+    .lbox-h { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .lbox-s { font-size: 13.5px; color: var(--t2); margin-bottom: 28px; }
+
+    .fgroup { margin-bottom: 16px; }
+
+    .flabel { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; color: var(--t1); }
+
+    .finput {
+      width: 100%; padding: 11px 14px;
+      border: 1.5px solid var(--border); border-radius: 9px;
+      font-size: 13.5px; font-family: inherit; color: var(--t1);
+      background: #fff; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .finput:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+    }
+
+    .forgot { float: right; font-size: 12px; color: var(--accent); text-decoration: none; font-weight: 500; }
+
+    .lbtn {
+      width: 100%; padding: 13px; margin-top: 6px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff; border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+      box-shadow: 0 6px 20px rgba(99,102,241,0.4);
+      transition: all 0.15s;
+    }
+
+    .lbtn:hover { filter: brightness(1.07); box-shadow: 0 8px 26px rgba(99,102,241,0.5); }
+
+    .divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; }
+    .div-line { flex: 1; height: 1px; background: var(--border); }
+    .div-txt { font-size: 12px; color: var(--t3); }
+
+    .social-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+
+    .social-btn {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 10px; border-radius: 9px; border: 1.5px solid var(--border);
+      font-size: 13px; font-weight: 600; cursor: pointer; background: #fff;
+      font-family: inherit; transition: background 0.15s;
+    }
+
+    .social-btn:hover { background: var(--bg); }
+
+    .signup-link { text-align: center; font-size: 12.5px; color: var(--t2); }
+    .signup-link a { color: var(--accent); font-weight: 600; text-decoration: none; }
+
+    .demo-chip {
+      display: flex; align-items: center; gap: 8px;
+      background: #f0f2ff; border: 1px solid #c7d2fe;
+      border-radius: 8px; padding: 10px 14px; margin-top: 18px;
+      font-size: 11.5px; color: #4338ca;
+    }
+
+    .demo-chip strong { font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ LOGIN OVERLAY ═══════════════════ -->
+<div class="overlay" id="overlay">
+  <div class="login-box">
+    <div class="lbox-logo">
+      <div class="logo-mark" style="width:38px;height:38px;border-radius:10px;font-size:19px">📊</div>
+      <span style="font-size:19px;font-weight:800">DataPulse <span class="logo-pro">PRO</span></span>
+    </div>
+    <h2 class="lbox-h">Welcome back 👋</h2>
+    <p class="lbox-s">Sign in to access your analytics dashboard</p>
+
+    <div class="social-btns">
+      <button class="social-btn">🔵 Google</button>
+      <button class="social-btn">⬛ GitHub</button>
+    </div>
+
+    <div class="divider"><div class="div-line"></div><span class="div-txt">or continue with email</span><div class="div-line"></div></div>
+
+    <div class="fgroup">
+      <label class="flabel">Email address</label>
+      <input class="finput" type="email" value="admin@datapulse.io" placeholder="you@company.com">
+    </div>
+
+    <div class="fgroup">
+      <a href="#" class="forgot">Forgot password?</a>
+      <label class="flabel">Password</label>
+      <input class="finput" type="password" value="••••••••••••" placeholder="Your password">
+    </div>
+
+    <button class="lbtn" onclick="document.getElementById('overlay').style.display='none'">
+      Sign in to Dashboard →
+    </button>
+
+    <p class="signup-link" style="margin-top:16px">
+      New to DataPulse? <a href="#">Start your 14-day free trial</a>
+    </p>
+
+    <div class="demo-chip">
+      <span>🔑</span>
+      <span><strong>Demo login:</strong> admin@datapulse.io &nbsp;/&nbsp; password123</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-top">
+    <div class="logo">
+      <div class="logo-mark">📊</div>
+      <span class="logo-text">DataPulse <span class="logo-pro">PRO</span></span>
+    </div>
+    <div class="workspace-btn">
+      <div class="ws-dot">🏢</div>
+      <span class="ws-name">Acme Corp · Team</span>
+      <span class="ws-chevron">⌄</span>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active">
+      <span class="nav-icon">🏠</span> Dashboard
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">📈</span> Analytics
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🛒</span> Orders
+      <span class="nav-badge">24</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">📦</span> Products
+    </div>
+
+    <div class="nav-label">Customers</div>
+    <div class="nav-item">
+      <span class="nav-icon">👥</span> All Customers
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">⭐</span> VIP Accounts
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">📬</span> Campaigns
+      <span class="nav-badge red">3</span>
+    </div>
+
+    <div class="nav-label">Finance</div>
+    <div class="nav-item">
+      <span class="nav-icon">💰</span> Revenue
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🔄</span> Subscriptions
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🧾</span> Invoices
+    </div>
+
+    <div class="nav-label">System</div>
+    <div class="nav-item">
+      <span class="nav-icon">⚙️</span> Settings
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🔐</span> Security
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="user-ava">TO</div>
+      <div>
+        <div class="user-name">Tetsugaku O.</div>
+        <div class="user-role">Administrator · Admin</div>
+      </div>
+      <span class="user-more">⋯</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════ MAIN ═══════════════════ -->
+<main class="main">
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <span class="page-title">Dashboard</span>
+    <div class="breadcrumb">
+      <span>Home</span><span>›</span><span style="color:var(--t2)">Overview</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="search">
+      <span style="color:var(--t3);font-size:14px">🔍</span>
+      <input type="text" placeholder="Search orders, customers…">
+    </div>
+    <div class="top-actions">
+      <div class="icon-btn2">
+        🔔
+        <div class="notif-pip"></div>
+      </div>
+      <div class="icon-btn2">📋</div>
+      <div class="top-ava">TO</div>
+    </div>
+  </header>
+
+  <div class="body">
+    <!-- Period bar -->
+    <div class="period-bar">
+      <div class="period-left">
+        <div class="period-title">Business Overview</div>
+        <div class="period-sub">📅 Oct 1, 2024 – Mar 7, 2025 &nbsp;·&nbsp; Auto-refreshes every 5 min</div>
+      </div>
+      <div class="period-right">
+        <button class="btn">📅 Last 6 months ⌄</button>
+        <button class="btn">⬇ Export</button>
+        <button class="btn btn-accent">+ New Report</button>
+      </div>
+    </div>
+
+    <!-- KPI ROW -->
+    <div class="kpi-row">
+      <!-- Revenue -->
+      <div class="kpi">
+        <div class="kpi-glow" style="background:#6366f1"></div>
+        <div class="kpi-top">
+          <span class="kpi-lbl">Total Revenue</span>
+          <div class="kpi-ico" style="background:#eef2ff">💰</div>
+        </div>
+        <div class="kpi-val">$124,832</div>
+        <div class="kpi-delta">
+          <span class="delta-chip up">↑ 12.5%</span>
+        </div>
+        <div class="kpi-cmp">vs $110,962 last period</div>
+        <div class="spark"><canvas id="sp1"></canvas></div>
+      </div>
+
+      <!-- Users -->
+      <div class="kpi">
+        <div class="kpi-glow" style="background:#10b981"></div>
+        <div class="kpi-top">
+          <span class="kpi-lbl">Active Users</span>
+          <div class="kpi-ico" style="background:#d1fae5">👥</div>
+        </div>
+        <div class="kpi-val">8,429</div>
+        <div class="kpi-delta">
+          <span class="delta-chip up">↑ 8.2%</span>
+        </div>
+        <div class="kpi-cmp">vs 7,791 last period</div>
+        <div class="spark"><canvas id="sp2"></canvas></div>
+      </div>
+
+      <!-- Orders -->
+      <div class="kpi">
+        <div class="kpi-glow" style="background:#f59e0b"></div>
+        <div class="kpi-top">
+          <span class="kpi-lbl">Total Orders</span>
+          <div class="kpi-ico" style="background:#fef3c7">🛒</div>
+        </div>
+        <div class="kpi-val">1,284</div>
+        <div class="kpi-delta">
+          <span class="delta-chip dn">↓ 2.1%</span>
+        </div>
+        <div class="kpi-cmp">vs 1,311 last period</div>
+        <div class="spark"><canvas id="sp3"></canvas></div>
+      </div>
+
+      <!-- Conversion -->
+      <div class="kpi">
+        <div class="kpi-glow" style="background:#ec4899"></div>
+        <div class="kpi-top">
+          <span class="kpi-lbl">Conversion Rate</span>
+          <div class="kpi-ico" style="background:#fce7f3">📊</div>
+        </div>
+        <div class="kpi-val">3.24%</div>
+        <div class="kpi-delta">
+          <span class="delta-chip up">↑ 0.4%</span>
+        </div>
+        <div class="kpi-cmp">vs 2.84% last period</div>
+        <div class="spark"><canvas id="sp4"></canvas></div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="charts-row">
+      <!-- Revenue Line Chart -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-ttl">Revenue Overview</div>
+            <div class="card-sub">Monthly comparison · 2024 vs 2025</div>
+          </div>
+          <div class="tabs">
+            <button class="tab">Weekly</button>
+            <button class="tab on">Monthly</button>
+            <button class="tab">Yearly</button>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="revChart"></canvas></div>
+        <div class="mini-row">
+          <div class="mini-card">
+            <div class="mini-ico" style="background:#eef2ff">📈</div>
+            <div><div class="mini-val">$20.8k</div><div class="mini-lbl">Avg / Month</div></div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-ico" style="background:#d1fae5">🏆</div>
+            <div><div class="mini-val">$124.8k</div><div class="mini-lbl">Best: Mar 2025</div></div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-ico" style="background:#fef3c7">🔥</div>
+            <div><div class="mini-val">113.7%</div><div class="mini-lbl">YoY Growth</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donut Chart -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-ttl">Revenue by Plan</div>
+            <div class="card-sub">Q1 2025 · Plan breakdown</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="donutChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- BOTTOM -->
+    <div class="btm">
+      <!-- Orders Table -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-ttl">Recent Transactions</div>
+            <div class="card-sub">Latest 8 orders</div>
+          </div>
+          <button class="btn" style="font-size:12px;padding:6px 12px">View all →</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Plan / Product</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Activity Feed -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-ttl">Live Activity</div>
+            <div class="card-sub">Real-time events</div>
+          </div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.2)"></div>
+        </div>
+        <div class="feed" id="feed"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+Chart.defaults.color = '#94a3b8';
+
+// ── Sparklines ──
+function mkSpark(id, data, color) {
+  new Chart(document.getElementById(id), {
+    type: 'line',
+    data: {
+      labels: data.map((_,i) => i),
+      datasets: [{ data, borderColor: color, borderWidth: 2, fill: true,
+        backgroundColor: color + '18', tension: 0.4,
+        pointRadius: 0, pointHoverRadius: 0 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{x:{display:false},y:{display:false}} }
+  });
+}
+
+mkSpark('sp1', [58,64,71,68,80,95,110,124], '#6366f1');
+mkSpark('sp2', [62,65,69,72,74,78,80,84], '#10b981');
+mkSpark('sp3', [110,105,115,125,118,130,128,128], '#f59e0b');
+mkSpark('sp4', [2.8,2.9,3.0,3.1,3.0,3.1,3.2,3.24], '#ec4899');
+
+// ── Revenue Line Chart ──
+new Chart(document.getElementById('revChart'), {
+  type: 'line',
+  data: {
+    labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+    datasets: [
+      {
+        label: '2025',
+        data: [58400, 72100, 95300, 88700, 104200, 124832],
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99,102,241,0.08)',
+        borderWidth: 2.5, fill: true, tension: 0.4,
+        pointBackgroundColor: '#6366f1', pointRadius: 4, pointHoverRadius: 7,
+        pointBorderColor: '#fff', pointBorderWidth: 2,
+      },
+      {
+        label: '2024',
+        data: [45200, 58900, 71400, 66800, 79300, 95100],
+        borderColor: '#e2e8f0',
+        backgroundColor: 'transparent',
+        borderWidth: 2, fill: false, tension: 0.4,
+        pointBackgroundColor: '#cbd5e1', pointRadius: 3, pointHoverRadius: 5,
+        borderDash: [5, 4],
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'top', labels: { usePointStyle:true, boxWidth:7, padding:16, font:{size:12} } },
+      tooltip: { callbacks: { label: ctx => ` $${ctx.parsed.y.toLocaleString()}` } }
+    },
+    scales: {
+      x: { grid:{display:false}, ticks:{font:{size:12}, color:'#94a3b8'} },
+      y: {
+        grid:{color:'#f1f5f9'},
+        ticks:{font:{size:12}, color:'#94a3b8', callback: v => '$'+(v/1000).toFixed(0)+'k'},
+        beginAtZero: false
+      }
+    }
+  }
+});
+
+// ── Donut Chart ──
+new Chart(document.getElementById('donutChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Enterprise', 'Pro Annual', 'Pro Monthly', 'Starter', 'Add-ons'],
+    datasets: [{
+      data: [38, 27, 18, 11, 6],
+      backgroundColor: ['#6366f1','#10b981','#f59e0b','#ec4899','#94a3b8'],
+      borderWidth: 0, hoverOffset: 10,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '70%',
+    plugins: {
+      legend: { position:'bottom', labels:{usePointStyle:true, boxWidth:8, padding:12, font:{size:12}} },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` } }
+    }
+  }
+});
+
+// ── Orders Table ──
+const ORDERS = [
+  { id:'#7291', name:'Sarah Johnson', email:'sarah@acme.com', plan:'Enterprise Annual', amt:'$9,600', status:'paid', date:'Mar 7', col:'#6366f1' },
+  { id:'#7290', name:'Michael Chen', email:'m.chen@startup.io', plan:'Pro Annual', amt:'$2,388', status:'paid', date:'Mar 6', col:'#10b981' },
+  { id:'#7289', name:'Emma Williams', email:'emma@designco.com', plan:'Starter Plan', amt:'$348', status:'pend', date:'Mar 6', col:'#f59e0b' },
+  { id:'#7288', name:'James Roberts', email:'j.roberts@tech.co', plan:'Pro Monthly', amt:'$199', status:'paid', date:'Mar 5', col:'#ec4899' },
+  { id:'#7287', name:'Olivia Davis', email:'olivia@free.net', plan:'Add-on: Analytics', amt:'$49', status:'fail', date:'Mar 5', col:'#8b5cf6' },
+  { id:'#7286', name:'Noah Martinez', email:'noah@growthco.com', plan:'Pro Annual', amt:'$2,388', status:'paid', date:'Mar 4', col:'#06b6d4' },
+  { id:'#7285', name:'Ava Thompson', email:'ava@commerce.io', plan:'Enterprise Annual', amt:'$9,600', status:'refund', date:'Mar 4', col:'#f97316' },
+  { id:'#7284', name:'Lucas Anderson', email:'l.anderson@bigco.com', plan:'Pro Monthly', amt:'$199', status:'paid', date:'Mar 3', col:'#14b8a6' },
+];
+
+const LABELS = { paid:'Paid', pend:'Pending', fail:'Failed', refund:'Refunded' };
+
+const tbody = document.getElementById('tbody');
+ORDERS.forEach(o => {
+  tbody.innerHTML += `
+    <tr>
+      <td><span class="oid">${o.id}</span></td>
+      <td><div class="cust-cell">
+        <div class="cust-ava" style="background:${o.col}">${o.name.split(' ').map(n=>n[0]).join('')}</div>
+        <div><div class="cust-n">${o.name}</div><div class="cust-e">${o.email}</div></div>
+      </div></td>
+      <td style="color:var(--t2);font-size:12.5px">${o.plan}</td>
+      <td><span class="amt">${o.amt}</span></td>
+      <td><span class="badge ${o.status}">${LABELS[o.status]}</span></td>
+      <td style="color:var(--t3);font-size:12px">${o.date}</td>
+    </tr>`;
+});
+
+// ── Activity Feed ──
+const FEED = [
+  { ico:'💰', bg:'#eef2ff', txt:'<strong>Sarah Johnson</strong> upgraded to Enterprise Plan', time:'2 min ago' },
+  { ico:'👤', bg:'#d1fae5', txt:'New user <strong>alex.kim@techco.io</strong> signed up', time:'14 min ago' },
+  { ico:'⚠️', bg:'#fee2e2', txt:'Payment failed for <strong>Olivia Davis</strong> — card declined', time:'27 min ago' },
+  { ico:'🔄', bg:'#fef3c7', txt:'<strong>Ava Thompson</strong> requested a refund ($9,600)', time:'1 hr ago' },
+  { ico:'📦', bg:'#f3e8ff', txt:'<strong>Noah Martinez</strong> added the Analytics add-on', time:'2 hr ago' },
+  { ico:'📧', bg:'#ecfeff', txt:'Monthly billing report sent to <strong>3 admins</strong>', time:'3 hr ago' },
+  { ico:'🔐', bg:'#fce7f3', txt:'2FA enabled for <strong>james.roberts@tech.co</strong>', time:'5 hr ago' },
+];
+
+const feedEl = document.getElementById('feed');
+FEED.forEach(f => {
+  feedEl.innerHTML += `
+    <div class="feed-item">
+      <div class="feed-ico" style="background:${f.bg}">${f.ico}</div>
+      <div class="feed-body">
+        <div class="feed-txt">${f.txt}</div>
+        <div class="feed-time">${f.time}</div>
+      </div>
+    </div>`;
+});
+</script>
+</body>
+</html>
