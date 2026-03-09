@@ -546,6 +546,58 @@
     }
 
     .demo-chip strong { font-weight: 700; }
+
+    /* ── Workspace dropdown ── */
+    .ws-dropdown {
+      display: none; position: absolute; left: 10px; right: 10px;
+      top: calc(100% + 6px); background: #1a1c2e; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 6px; z-index: 300;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .ws-dropdown.open { display: block; }
+    .ws-opt {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; border-radius: 7px; cursor: pointer;
+      color: rgba(255,255,255,0.7); font-size: 12.5px; font-weight: 500;
+      transition: background 0.15s;
+    }
+    .ws-opt:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .ws-opt.current { color: #fff; }
+    .ws-opt-dot {
+      width: 22px; height: 22px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0;
+    }
+
+    /* ── User menu dropdown ── */
+    .user-menu {
+      display: none; position: absolute; bottom: calc(100% + 6px); left: 10px; right: 10px;
+      background: #1a1c2e; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 6px; z-index: 300;
+      box-shadow: 0 -8px 24px rgba(0,0,0,0.4);
+    }
+    .user-menu.open { display: block; }
+    .user-menu-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 10px; border-radius: 7px; cursor: pointer;
+      color: rgba(255,255,255,0.7); font-size: 12.5px; font-weight: 500;
+      transition: background 0.15s;
+    }
+    .user-menu-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .user-menu-item.danger { color: rgba(239,68,68,0.8); }
+    .user-menu-item.danger:hover { background: rgba(239,68,68,0.1); color: #ef4444; }
+    .user-menu-sep { height: 1px; background: rgba(255,255,255,0.06); margin: 4px 0; }
+
+    /* ── Toast notifications ── */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+      padding: 13px 18px; border-radius: 10px; font-size: 13.5px; font-weight: 500;
+      color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      transform: translateY(16px); opacity: 0; transition: all 0.28s ease;
+      max-width: 340px; pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast-info    { background: #6366f1; }
+    .toast-success { background: #10b981; }
   </style>
 </head>
 <body>
@@ -600,63 +652,84 @@
       <div class="logo-mark">📊</div>
       <span class="logo-text">DataPulse <span class="logo-pro">PRO</span></span>
     </div>
-    <div class="workspace-btn">
+    <div class="workspace-btn" onclick="toggleWsDropdown()" style="position:relative">
       <div class="ws-dot">🏢</div>
-      <span class="ws-name">Acme Corp · Team</span>
+      <span class="ws-name" id="ws-name">Acme Corp · Team</span>
       <span class="ws-chevron">⌄</span>
+      <div class="ws-dropdown" id="ws-dropdown">
+        <div class="ws-opt current" onclick="switchWorkspace('Acme Corp · Team','🏢',event)">
+          <div class="ws-opt-dot" style="background:linear-gradient(135deg,#10b981,#059669)">🏢</div>
+          Acme Corp · Team
+        </div>
+        <div class="ws-opt" onclick="switchWorkspace('Beta Startups','🚀',event)">
+          <div class="ws-opt-dot" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">🚀</div>
+          Beta Startups
+        </div>
+        <div class="ws-opt" onclick="switchWorkspace('Personal','👤',event)">
+          <div class="ws-opt-dot" style="background:linear-gradient(135deg,#f59e0b,#d97706)">👤</div>
+          Personal
+        </div>
+      </div>
     </div>
   </div>
 
   <nav class="nav">
     <div class="nav-label">Overview</div>
-    <div class="nav-item active">
+    <div class="nav-item active" onclick="navigate(this,'Dashboard','Overview')">
       <span class="nav-icon">🏠</span> Dashboard
     </div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="navigate(this,'Analytics','Overview')">
       <span class="nav-icon">📈</span> Analytics
     </div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="navigate(this,'Orders','Overview')">
       <span class="nav-icon">🛒</span> Orders
       <span class="nav-badge">24</span>
     </div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="navigate(this,'Products','Overview')">
       <span class="nav-icon">📦</span> Products
     </div>
 
     <div class="nav-label">Customers</div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="navigate(this,'All Customers','Customers')">
       <span class="nav-icon">👥</span> All Customers
     </div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="navigate(this,'VIP Accounts','Customers')">
       <span class="nav-icon">⭐</span> VIP Accounts
     </div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="navigate(this,'Campaigns','Customers')">
       <span class="nav-icon">📬</span> Campaigns
       <span class="nav-badge red">3</span>
     </div>
 
     <div class="nav-label">Finance</div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="navigate(this,'Revenue','Finance')">
       <span class="nav-icon">💰</span> Revenue
     </div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="navigate(this,'Subscriptions','Finance')">
       <span class="nav-icon">🔄</span> Subscriptions
     </div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="navigate(this,'Invoices','Finance')">
       <span class="nav-icon">🧾</span> Invoices
     </div>
 
     <div class="nav-label">System</div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="navigate(this,'Settings','System')">
       <span class="nav-icon">⚙️</span> Settings
     </div>
-    <div class="nav-item">
+    <div class="nav-item" onclick="navigate(this,'Security','System')">
       <span class="nav-icon">🔐</span> Security
     </div>
   </nav>
 
-  <div class="sidebar-footer">
-    <div class="user-row">
+  <div class="sidebar-footer" style="position:relative">
+    <div class="user-menu" id="user-menu">
+      <div class="user-menu-item" onclick="showToast('Profile settings coming soon', 'info')">👤 View Profile</div>
+      <div class="user-menu-item" onclick="navigate(document.querySelector('.nav-item:last-child'),'Settings','System')">⚙️ Account Settings</div>
+      <div class="user-menu-item" onclick="showToast('Keyboard shortcuts: ? to toggle', 'info')">⌨️ Keyboard Shortcuts</div>
+      <div class="user-menu-sep"></div>
+      <div class="user-menu-item danger" onclick="document.getElementById('overlay').style.display='flex'; closeAllDropdowns()">🚪 Sign Out</div>
+    </div>
+    <div class="user-row" onclick="toggleUserMenu()">
       <div class="user-ava">TO</div>
       <div>
         <div class="user-name">Tetsugaku O.</div>
@@ -995,6 +1068,60 @@ FEED.forEach(f => {
         <div class="feed-time">${f.time}</div>
       </div>
     </div>`;
+});
+
+// ── Toast utility ──
+function showToast(msg, type = 'info') {
+  const t = Object.assign(document.createElement('div'), {
+    className: `toast toast-${type}`, textContent: msg
+  });
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+// ── Sidebar navigation ──
+function navigate(el, pageName, section) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelector('.page-title').textContent = pageName;
+  document.querySelector('.breadcrumb').innerHTML =
+    `<span>Home</span><span>›</span><span style="color:var(--t2)">${section}</span>` +
+    (pageName !== section ? `<span>›</span><span style="color:var(--t2)">${pageName}</span>` : '');
+  closeAllDropdowns();
+}
+
+// ── Workspace switcher ──
+function toggleWsDropdown() {
+  const dd = document.getElementById('ws-dropdown');
+  const isOpen = dd.classList.contains('open');
+  closeAllDropdowns();
+  if (!isOpen) dd.classList.add('open');
+}
+
+function switchWorkspace(name, icon, e) {
+  e.stopPropagation();
+  document.getElementById('ws-name').textContent = name;
+  closeAllDropdowns();
+  showToast(`Switched to ${name}`, 'success');
+}
+
+// ── User menu ──
+function toggleUserMenu() {
+  const menu = document.getElementById('user-menu');
+  const isOpen = menu.classList.contains('open');
+  closeAllDropdowns();
+  if (!isOpen) menu.classList.add('open');
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll('.ws-dropdown, .user-menu').forEach(d => d.classList.remove('open'));
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.workspace-btn') && !e.target.closest('.user-row')) {
+    closeAllDropdowns();
+  }
 });
 </script>
 </body>
