@@ -1,8 +1,7 @@
-import { ORDERS, FEED_DATA, CHART_DATA } from '../data.js'
+import { ORDERS, FEED_DATA, CHART_DATA, STATUS_LABELS } from '../data.js'
+import { exportOrdersCSV } from '../utils/csv.js'
 import { KpiCard } from './KpiCard.jsx'
 import { RevenueChart, DonutChart } from './Charts.jsx'
-
-const STATUS_LABELS = { paid:'Paid', pend:'Pending', fail:'Failed', refund:'Refunded' }
 
 function OrderRow({ o }) {
   const initials = o.name.split(' ').map(n => n[0]).join('')
@@ -70,19 +69,18 @@ function ChartsSection({ activeTab, onTabChange, darkMode }) {
   )
 }
 
-export function Dashboard({ activeTab, onTabChange, onOpenKpiPanel, showToast, dateRange, onDateRangeChange, onOpenReportModal, onOpenTxnModal, darkMode, showDateDd, onToggleDateDd, onCloseDateDd }) {
-  const DATE_RANGES = ['Last 7 days','Last 30 days','Last 6 months','Last 12 months','Year to date','All time']
+const DATE_RANGES = ['Last 7 days','Last 30 days','Last 6 months','Last 12 months','Year to date','All time']
 
-  function exportCSV() {
-    const headers = ['Order','Customer','Email','Plan','Amount','Status','Date']
-    const rows = ORDERS.map(o => [o.id, o.name, o.email, o.plan, o.amt, o.status, o.date])
-    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n')
-    const blob = new Blob([csv], { type:'text/csv' })
-    const url = URL.createObjectURL(blob)
-    Object.assign(document.createElement('a'), { href:url, download:'datapulse-transactions.csv' }).click()
-    URL.revokeObjectURL(url)
-    showToast('Transactions exported as CSV', 'success')
-  }
+const KPI_CARDS = [
+  { key:'revenue',   label:'Total Revenue',   value:'$124,832', delta:'↑ 12.5%', deltaType:'up', compare:'vs $110,962 last period',  sparkData:[58,64,71,68,80,95,110,124],          sparkColor:'#6366f1', glowColor:'#6366f1', ico:'💰', icoBg:'#eef2ff' },
+  { key:'users',     label:'Active Users',    value:'8,429',    delta:'↑ 8.2%',  deltaType:'up', compare:'vs 7,791 last period',     sparkData:[62,65,69,72,74,78,80,84],            sparkColor:'#10b981', glowColor:'#10b981', ico:'👥', icoBg:'#d1fae5' },
+  { key:'orders',    label:'Total Orders',    value:'1,284',    delta:'↓ 2.1%',  deltaType:'dn', compare:'vs 1,311 last period',     sparkData:[110,105,115,125,118,130,128,128],    sparkColor:'#f59e0b', glowColor:'#f59e0b', ico:'🛒', icoBg:'#fef3c7' },
+  { key:'conversion',label:'Conversion Rate', value:'3.24%',    delta:'↑ 0.4%',  deltaType:'up', compare:'vs 2.84% last period',     sparkData:[2.8,2.9,3.0,3.1,3.0,3.1,3.2,3.24], sparkColor:'#ec4899', glowColor:'#ec4899', ico:'📊', icoBg:'#fce7f3' },
+]
+
+export function Dashboard({ activeTab, onTabChange, onOpenKpiPanel, showToast, dateRange, onDateRangeChange, onOpenReportModal, onOpenTxnModal, darkMode, showDateDd, onToggleDateDd, onCloseDateDd }) {
+
+  function exportCSV() { exportOrdersCSV(ORDERS, showToast) }
 
   return (
     <>
@@ -111,18 +109,9 @@ export function Dashboard({ activeTab, onTabChange, onOpenKpiPanel, showToast, d
       </div>
 
       <div className="kpi-row">
-        <KpiCard label="Total Revenue"    value="$124,832" delta="↑ 12.5%" deltaType="up" compare="vs $110,962 last period"
-          sparkData={[58,64,71,68,80,95,110,124]} sparkColor="#6366f1" glowColor="#6366f1" ico="💰" icoBg="#eef2ff"
-          onClick={() => onOpenKpiPanel('revenue')} />
-        <KpiCard label="Active Users"     value="8,429"    delta="↑ 8.2%"  deltaType="up" compare="vs 7,791 last period"
-          sparkData={[62,65,69,72,74,78,80,84]} sparkColor="#10b981" glowColor="#10b981" ico="👥" icoBg="#d1fae5"
-          onClick={() => onOpenKpiPanel('users')} />
-        <KpiCard label="Total Orders"     value="1,284"    delta="↓ 2.1%"  deltaType="dn" compare="vs 1,311 last period"
-          sparkData={[110,105,115,125,118,130,128,128]} sparkColor="#f59e0b" glowColor="#f59e0b" ico="🛒" icoBg="#fef3c7"
-          onClick={() => onOpenKpiPanel('orders')} />
-        <KpiCard label="Conversion Rate"  value="3.24%"    delta="↑ 0.4%"  deltaType="up" compare="vs 2.84% last period"
-          sparkData={[2.8,2.9,3.0,3.1,3.0,3.1,3.2,3.24]} sparkColor="#ec4899" glowColor="#ec4899" ico="📊" icoBg="#fce7f3"
-          onClick={() => onOpenKpiPanel('conversion')} />
+        {KPI_CARDS.map(c => (
+          <KpiCard key={c.key} {...c} onClick={() => onOpenKpiPanel(c.key)} />
+        ))}
       </div>
 
       <ChartsSection activeTab={activeTab} onTabChange={onTabChange} darkMode={darkMode} />

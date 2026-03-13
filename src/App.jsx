@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Chart, registerables } from 'chart.js'
 import { ORDERS, NOTIFS_DEFAULT } from './data.js'
-import { ToastItem, toastIdCounter as _counter } from './components/Toast.jsx'
+import { exportOrdersCSV } from './utils/csv.js'
+import { ToastItem } from './components/Toast.jsx'
 import { LoginOverlay } from './components/Auth.jsx'
 import { Sidebar } from './components/Sidebar.jsx'
 import { Topbar } from './components/Topbar.jsx'
@@ -14,7 +15,7 @@ Chart.register(...registerables)
 Chart.defaults.font.family = "'Inter', system-ui, sans-serif"
 Chart.defaults.color = '#94a3b8'
 
-let toastIdCounter = _counter
+let toastIdCounter = 0
 
 export default function App() {
   const [isLoggedIn,     setIsLoggedIn]     = useState(false)
@@ -50,16 +51,7 @@ export default function App() {
     setShowDateDd(false)
   }
 
-  function exportCSV() {
-    const headers = ['Order','Customer','Email','Plan','Amount','Status','Date']
-    const rows = ORDERS.map(o => [o.id, o.name, o.email, o.plan, o.amt, o.status, o.date])
-    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n')
-    const blob = new Blob([csv], { type:'text/csv' })
-    const url = URL.createObjectURL(blob)
-    Object.assign(document.createElement('a'), { href:url, download:'datapulse-transactions.csv' }).click()
-    URL.revokeObjectURL(url)
-    showToast('Transactions exported as CSV','success')
-  }
+  function exportCSV() { exportOrdersCSV(ORDERS, showToast) }
 
   // Global keyboard shortcuts
   useEffect(() => {

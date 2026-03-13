@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { ORDERS, ALL_ORDERS } from '../data.js'
+import { exportOrdersCSV } from '../utils/csv.js'
 
 export function CommandPalette({ open, onClose, onNavigate, onToggleDark, showToast, onOpenReportModal, onOpenTxnModal, onOpenKpiPanel }) {
   const [query, setQuery] = useState('')
@@ -10,16 +11,7 @@ export function CommandPalette({ open, onClose, onNavigate, onToggleDark, showTo
     if (open) { setQuery(''); setActiveIdx(0); setTimeout(() => inputRef.current?.focus(), 30) }
   }, [open])
 
-  function exportCSVAction() {
-    const headers = ['Order','Customer','Email','Plan','Amount','Status','Date']
-    const rows = ORDERS.map(o => [o.id, o.name, o.email, o.plan, o.amt, o.status, o.date])
-    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n')
-    const blob = new Blob([csv], { type:'text/csv' })
-    const url = URL.createObjectURL(blob)
-    Object.assign(document.createElement('a'), { href:url, download:'datapulse-transactions.csv' }).click()
-    URL.revokeObjectURL(url)
-    showToast('Transactions exported as CSV','success')
-  }
+  function exportCSVAction() { exportOrdersCSV(ORDERS, showToast) }
 
   const COMMANDS = [
     { type:'nav',    ico:'🏠', bg:'#eef2ff', label:'Dashboard',            sub:'Overview · KPI, charts, transactions', badge:'Page',     action:() => onNavigate('Dashboard','Overview') },
@@ -39,17 +31,18 @@ export function CommandPalette({ open, onClose, onNavigate, onToggleDark, showTo
     { type:'kpi',    ico:'📊', bg:'#fce7f3', label:'Conversion Rate',      sub:'3.24% · +0.4% vs last period',        badge:'KPI',      action:() => onOpenKpiPanel('conversion') },
   ]
 
-  const customerCmds = ALL_ORDERS.map(o => ({
+  const customerCmds = useMemo(() => ALL_ORDERS.map(o => ({
     type:'customer', ico:'👤', bg:'#f8fafc',
     label:o.name, sub:`${o.email} · ${o.plan} · ${o.amt}`, badge:'Customer',
     action:() => showToast(`Viewing ${o.name}`,'info'),
-  }))
+  })), [showToast])
 
   const term = query.toLowerCase().trim()
-  const allCmds = [...COMMANDS, ...customerCmds]
-  const filtered = term
-    ? allCmds.filter(c => (c.label+c.sub).toLowerCase().includes(term))
-    : COMMANDS.filter(c => c.type !== 'customer')
+  const filtered = useMemo(() => {
+    if (!term) return COMMANDS.filter(c => c.type !== 'customer')
+    const allCmds = [...COMMANDS, ...customerCmds]
+    return allCmds.filter(c => (c.label+c.sub).toLowerCase().includes(term))
+  }, [term, customerCmds]) // eslint-disable-line react-hooks/exhaustive-deps -- COMMANDS is stable module-level constant
 
   useEffect(() => { setActiveIdx(filtered.length > 0 ? 0 : -1) }, [query, filtered.length])
 

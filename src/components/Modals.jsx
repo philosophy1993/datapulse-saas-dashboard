@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ALL_ORDERS, KPI_DATA } from '../data.js'
+import { ALL_ORDERS, KPI_DATA, STATUS_LABELS } from '../data.js'
 import { OrderRow } from './Dashboard.jsx'
 
 export function ReportModal({ open, onClose, showToast }) {
@@ -50,8 +50,7 @@ export function ReportModal({ open, onClose, showToast }) {
 export function TransactionsModal({ open, onClose }) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const STATUSES = ['all','paid','pend','fail','refund']
-  const SLABELS = { all:'All', paid:'Paid', pend:'Pending', fail:'Failed', refund:'Refunded' }
+  const STATUSES = Object.keys(STATUS_LABELS)
 
   const filtered = ALL_ORDERS.filter(o =>
     (statusFilter === 'all' || o.status === statusFilter) &&
@@ -77,7 +76,7 @@ export function TransactionsModal({ open, onClose }) {
         <div className="txn-filter-row">
           {STATUSES.map(s => (
             <button key={s} className={`txn-filter${statusFilter === s ? ' active' : ''}`} onClick={() => setStatusFilter(s)}>
-              {SLABELS[s]}
+              {STATUS_LABELS[s]}
             </button>
           ))}
         </div>
@@ -95,6 +94,7 @@ export function TransactionsModal({ open, onClose }) {
 export function KpiPanel({ open, type, onClose }) {
   if (!type) return null
   const d = KPI_DATA[type]
+  if (!d) return null
   return (
     <>
       <div className={`kpi-panel-overlay${open ? ' show' : ''}`} onClick={onClose} />
@@ -127,6 +127,29 @@ export function KpiPanel({ open, type, onClose }) {
   )
 }
 
+const KB_SECTIONS = [
+  { title: 'Navigation', rows: [
+    { label: 'Go to Dashboard', keys: ['G', 'then', 'D'] },
+    { label: 'Go to Analytics', keys: ['G', 'then', 'A'] },
+    { label: 'Go to Settings',  keys: ['G', 'then', 'S'] },
+  ]},
+  { title: 'Search & Filters', rows: [
+    { label: 'Command palette', keys: ['⌘', '+', 'K'] },
+    { label: 'Clear search',    keys: ['Esc'] },
+  ]},
+  { title: 'Modals & Panels', rows: [
+    { label: 'View all transactions', keys: ['T'] },
+    { label: 'New report',            keys: ['N'] },
+    { label: 'Notifications',         keys: ['B'] },
+    { label: 'Close any modal',       keys: ['Esc'] },
+  ]},
+  { title: 'Display', rows: [
+    { label: 'Toggle dark mode', keys: ['D'] },
+    { label: 'Export as CSV',    keys: ['E'] },
+    { label: 'Show this help',   keys: ['?'] },
+  ]},
+]
+
 export function KeyboardShortcutsModal({ open, onClose }) {
   if (!open) return null
   return (
@@ -136,22 +159,21 @@ export function KeyboardShortcutsModal({ open, onClose }) {
           <div className="modal-title">Keyboard Shortcuts</div>
           <button className="txn-close" onClick={onClose}>✕</button>
         </div>
-        <div className="kb-section-title">Navigation</div>
-        <div className="kb-row"><span>Go to Dashboard</span><span className="kb-keys"><span className="kb-shortcut">G</span><span className="kb-plus">then</span><span className="kb-shortcut">D</span></span></div>
-        <div className="kb-row"><span>Go to Analytics</span><span className="kb-keys"><span className="kb-shortcut">G</span><span className="kb-plus">then</span><span className="kb-shortcut">A</span></span></div>
-        <div className="kb-row"><span>Go to Settings</span><span className="kb-keys"><span className="kb-shortcut">G</span><span className="kb-plus">then</span><span className="kb-shortcut">S</span></span></div>
-        <div className="kb-section-title">Search & Filters</div>
-        <div className="kb-row"><span>Command palette</span><span className="kb-keys"><span className="kb-shortcut">⌘</span><span className="kb-plus">+</span><span className="kb-shortcut">K</span></span></div>
-        <div className="kb-row"><span>Clear search</span><span className="kb-keys"><span className="kb-shortcut">Esc</span></span></div>
-        <div className="kb-section-title">Modals & Panels</div>
-        <div className="kb-row"><span>View all transactions</span><span className="kb-keys"><span className="kb-shortcut">T</span></span></div>
-        <div className="kb-row"><span>New report</span><span className="kb-keys"><span className="kb-shortcut">N</span></span></div>
-        <div className="kb-row"><span>Notifications</span><span className="kb-keys"><span className="kb-shortcut">B</span></span></div>
-        <div className="kb-row"><span>Close any modal</span><span className="kb-keys"><span className="kb-shortcut">Esc</span></span></div>
-        <div className="kb-section-title">Display</div>
-        <div className="kb-row"><span>Toggle dark mode</span><span className="kb-keys"><span className="kb-shortcut">D</span></span></div>
-        <div className="kb-row"><span>Export as CSV</span><span className="kb-keys"><span className="kb-shortcut">E</span></span></div>
-        <div className="kb-row"><span>Show this help</span><span className="kb-keys"><span className="kb-shortcut">?</span></span></div>
+        {KB_SECTIONS.map(section => (
+          <div key={section.title}>
+            <div className="kb-section-title">{section.title}</div>
+            {section.rows.map(row => (
+              <div key={row.label} className="kb-row">
+                <span>{row.label}</span>
+                <span className="kb-keys">
+                  {row.keys.map((k, i) => (
+                    <span key={i} className={k === 'then' || k === '+' ? 'kb-plus' : 'kb-shortcut'}>{k}</span>
+                  ))}
+                </span>
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   )

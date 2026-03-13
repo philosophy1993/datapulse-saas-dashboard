@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 export function Topbar({ currentPage, currentSection, onOpenCp, darkMode, onToggleDark, onOpenKbModal, showToast, notifications, onDismissNotif, onMarkAllRead }) {
   const [showNotifPanel, setShowNotifPanel] = useState(false)
   const [showAvaMenu, setShowAvaMenu] = useState(false)
-  const unreadCount = notifications.filter(n => n.unread).length
+  const unreadCount = useMemo(() => notifications.filter(n => n.unread).length, [notifications])
 
   return (
     <header className="topbar">

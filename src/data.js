@@ -104,6 +104,14 @@ export const NOTIFS_DEFAULT = [
   { id:4, ico:'👤', bg:'#d1fae5', txt:'New user <strong>alex.kim@techco.io</strong> signed up', time:'14 min ago', unread:false },
 ]
 
+export const STATUS_LABELS = {
+  all: 'All',
+  paid: 'Paid',
+  pend: 'Pending',
+  fail: 'Failed',
+  refund: 'Refunded',
+}
+
 export const NAV_ITEMS = [
   { label:'Overview', items:[
     { icon:'🏠', name:'Dashboard',    section:'Overview' },
